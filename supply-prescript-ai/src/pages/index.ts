@@ -1,0 +1,6 @@
+export * from './DashboardPage'
+export * from './OrdersPage'
+export * from './ShipmentsPage'
+export * from './SuppliersPage'
+export * from './InventoryPage'
+export * from './SettingsPage'
