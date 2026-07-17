@@ -118,3 +118,4 @@ pages — route-based pages
 layouts — shared app shell
 data — mock JSON-style data
 types — shared TypeScript types
+----
