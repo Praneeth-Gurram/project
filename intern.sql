@@ -1,41 +1,48 @@
-# SupplyPrescript – Closed-Loop Prescriptive Analytics & EDA
+CREATE TABLE logistics_data (
+    timestamp DATE,
+    asset_id VARCHAR(20),
+    latitude NUMERIC(10,6),
+    longitude NUMERIC(10,6),
+    inventory_level INT,
+    shipment_status VARCHAR(30),
+    temperature NUMERIC(5,2),
+    humidity NUMERIC(5,2),
+    traffic_status VARCHAR(30),
+    waiting_time INT,
+    user_transaction_amount NUMERIC(10,2),
+    user_purchase_frequency INT,
+    logistics_delay_reason VARCHAR(100),
+    asset_utilization NUMERIC(5,2),
+    demand_forecast INT,
+    logistics_delay INT
+);
 
-## Project Description
-This project analyzes logistics and supply chain data using PostgreSQL and Python. It helps identify shipment delays, inventory levels, and logistics performance.
+SELECT COUNT(*) FROM logistics_data;
 
-## Project Structure
-```text
-├── data/
-│   ├── raw/
-│   └── processed/
-├── notebooks/
-│   └── 01_Day_1_EDA.ipynb
-├── src/
-└── README.md
-```
+SELECT * FROM logistics_data LIMIT 5;
 
-## Technologies Used
-- PostgreSQL
-- SQL
-- Python (Pandas, NumPy, Matplotlib)
-- Jupyter Notebook
-- Git & GitHub
+SELECT COUNT(*) AS total_records
+FROM logistics_data;
 
-## Dataset
-Smart Logistics Dataset
+SELECT *
+FROM logistics_data
+LIMIT 10;
 
-## Roles & Contributions
-- Created the PostgreSQL database
-- Imported the dataset
-- Wrote SQL queries
-- Performed data analysis
-- Set up the Python EDA environment
+SELECT
+COUNT(*) FILTER (WHERE shipment_status IS NULL) AS null_shipment_status,
+COUNT(*) FILTER (WHERE inventory_level IS NULL) AS null_inventory,
+COUNT(*) FILTER (WHERE logistics_delay IS NULL) AS null_delay
+FROM logistics_data;
 
-## Author
-KAMBAM JAGADEESH KUMAR REDDY
+SELECT *
+FROM logistics_data
+WHERE logistics_delay > 0;
 
-## Getting Started (Python EDA)
-1. Clone this repository.
-2. Install the required libraries: `pandas`, `numpy`, `matplotlib`, and `jupyter`.
-3. Navigate to the `notebooks/` directory.
-4. Launch Jupyter Notebook and open `01_Day_1_EDA.ipynb`.
+database_queries.sql
+
+Average Inventory Level
+SELECT AVG(inventory_level) AS avg_inventory
+FROM logistics_data;
+
+Test change
+SELECT NOW();
