@@ -1,6 +1,7 @@
-# Smart Logistics - Exploratory Data Analysis (EDA)
+# SupplyPrescript – Closed-Loop Prescriptive Analytics & EDA
 
-This project contains the Exploratory Data Analysis for the **Smart Logistics** dataset. 
+## Project Description
+This project analyzes logistics and supply chain data using PostgreSQL and Python. It helps identify shipment delays, inventory levels, and logistics performance.
 
 ## Project Structure
 ```text
@@ -13,7 +14,21 @@ This project contains the Exploratory Data Analysis for the **Smart Logistics** 
 └── README.md                # Project overview and setup instructions
 ```
 
-## Getting Started
+## Technologies Used
+- PostgreSQL
+- SQL
+- Python (Pandas, NumPy, Matplotlib)
+- Jupyter Notebook
+- Git & GitHub
+
+## Dataset
+Smart Logistics Dataset
+
+## Roles & Contributions
+- **KAMBAM JAGADEESH KUMAR REDDY**: Created the PostgreSQL database, imported the dataset, wrote SQL queries, and performed data analysis.
+- **Python EDA**: Set up the Exploratory Data Analysis environment in Python.
+
+## Getting Started (Python EDA)
 1. Clone this repository.
 2. Install the required libraries: `pandas`, `numpy`, `matplotlib`, and `jupyter`.
 3. Navigate to the `notebooks/` directory.
