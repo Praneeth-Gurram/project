@@ -39,3 +39,10 @@ FROM logistics_data
 WHERE logistics_delay > 0;
 
 database_queries.sql
+
+Average Inventory Level
+SELECT AVG(inventory_level) AS avg_inventory
+FROM logistics_data;
+
+Test change
+SELECT NOW();
