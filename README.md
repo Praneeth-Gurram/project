@@ -6,12 +6,12 @@ This project analyzes logistics and supply chain data using PostgreSQL and Pytho
 ## Project Structure
 ```text
 ├── data/
-│   ├── raw/                 # Raw, immutable data (e.g., smart_logistics.csv)
-│   └── processed/           # Cleaned data ready for modeling
+│   ├── raw/
+│   └── processed/
 ├── notebooks/
-│   └── 01_Day_1_EDA.ipynb   # Day 1: Initial Data Inspection
-├── src/                     # Source code for reusable python scripts
-└── README.md                # Project overview and setup instructions
+│   └── 01_Day_1_EDA.ipynb
+├── src/
+└── README.md
 ```
 
 ## Technologies Used
@@ -25,11 +25,17 @@ This project analyzes logistics and supply chain data using PostgreSQL and Pytho
 Smart Logistics Dataset
 
 ## Roles & Contributions
-- **KAMBAM JAGADEESH KUMAR REDDY**: Created the PostgreSQL database, imported the dataset, wrote SQL queries, and performed data analysis.
-- **Python EDA**: Set up the Exploratory Data Analysis environment in Python.
+- Created the PostgreSQL database
+- Imported the dataset
+- Wrote SQL queries
+- Performed data analysis
+- Set up the Python EDA environment
+
+## Author
+KAMBAM JAGADEESH KUMAR REDDY
 
 ## Getting Started (Python EDA)
 1. Clone this repository.
 2. Install the required libraries: `pandas`, `numpy`, `matplotlib`, and `jupyter`.
 3. Navigate to the `notebooks/` directory.
-4. Launch Jupyter Notebook (`jupyter notebook`) and open `01_Day_1_EDA.ipynb`.
+4. Launch Jupyter Notebook and open `01_Day_1_EDA.ipynb`.
