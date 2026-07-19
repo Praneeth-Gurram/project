@@ -123,3 +123,22 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 print(f"\nTrain size: {X_train.shape[0]} | Test size: {X_test.shape[0]}")
 print(f"Class balance (delay rate) - train: {y_train.mean():.3f}, test: {y_test.mean():.3f}")
+# ---------------------------------------------------------------------------
+# 4. BASELINE MODEL
+# ---------------------------------------------------------------------------
+base_model = XGBClassifier(
+    n_estimators=300,
+    max_depth=4,
+    learning_rate=0.05,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    eval_metric="logloss",
+    random_state=RANDOM_STATE,
+    n_jobs=-1,
+)
+
+base_model.fit(
+    X_train, y_train,
+    eval_set=[(X_test, y_test)],
+    verbose=False,
+)
