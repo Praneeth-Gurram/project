@@ -13,7 +13,57 @@ from pulp import (
     lpSum,
     LpStatus,
     value,
+    PULP_CBC_CMD
 )
+
+from optimization.recommendation import Recommendation
+
+def solve(self):
+    """
+    Solve the optimization problem.
+    """
+
+    self.problem.solve(PULP_CBC_CMD(msg=False))
+
+    return LpStatus[self.problem.status]
+
+
+def generate_recommendations(self, benefit_scores):
+    """
+    Convert optimization results into
+    Recommendation objects.
+    """
+
+    recommendations = []
+
+    for asset in self.decision_variables:
+
+        selected_action = None
+
+        for action in self.ACTIONS:
+
+            variable = self.decision_variables[asset][action]
+
+            if value(variable) == 1:
+
+                selected_action = action
+                break
+
+        if selected_action is None:
+            continue
+
+        recommendation = Recommendation(
+            asset_id=asset,
+            action=selected_action,
+            priority="HIGH",
+            reason="Optimization selected highest-benefit action.",
+            estimated_cost=0.0,
+            expected_benefit=benefit_scores[asset][selected_action]
+        )
+
+        recommendations.append(recommendation)
+
+    return recommendations
 
 def add_constraints(self):
     """
