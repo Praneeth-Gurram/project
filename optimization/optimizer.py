@@ -98,6 +98,18 @@ class SupplyPrescriptOptimizer:
         "waiting_time",
     ]
 
+def validate_assets(self, asset_ids):
+    """
+    Validate asset identifiers before
+    optimization begins.
+    """
+
+    if not asset_ids:
+        raise ValueError("Asset list cannot be empty.")
+
+    if len(asset_ids) != len(set(asset_ids)):
+        raise ValueError("Duplicate Asset_ID values detected.")
+
     def __init__(self):
 
         self.problem = LpProblem(
@@ -107,7 +119,7 @@ class SupplyPrescriptOptimizer:
 
         self.decision_variables = {}
 
-    def initialize_variables(self, asset_ids):
+    def self.validate_assets(asset_ids) initialize_variables(self, asset_ids):
         """
         Create one binary decision variable
         for every asset-action combination.
