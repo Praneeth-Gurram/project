@@ -1,7 +1,7 @@
-# Smart Logistics Internship Project
+# SupplyPrescript – Closed-Loop Prescriptive Analytics & EDA
 
-## Overview
-This project aims to analyze and optimize logistics operations using data-driven approaches. We explore order shipments, costs, and delivery statuses to extract actionable business insights.
+## Project Description
+This project analyzes logistics and supply chain data using PostgreSQL and Python. It helps identify shipment delays, inventory levels, and logistics performance.
 
 ## Project Structure
 - `data/`: 
@@ -12,13 +12,31 @@ This project aims to analyze and optimize logistics operations using data-driven
 - `models/`: Stores trained machine learning models for later use.
 - `reports/`: Contains generated reports, visualizations, and summary presentations.
 
-## Data Setup
-1. Ensure the raw dataset `smart_logistics.csv` is placed inside the `data/raw/` directory.
+## Technologies Used
+- PostgreSQL
+- SQL
+- Python (Pandas, NumPy, Matplotlib)
+- Jupyter Notebook
+- Git & GitHub
 
-## Dependencies
-- `pandas` (for data manipulation)
-- `numpy` (for numerical operations)
-- `jupyter` (to run the notebooks)
+## Dataset
+Smart Logistics Dataset
+
+## Roles & Contributions
+- Created the PostgreSQL database
+- Imported the dataset
+- Wrote SQL queries
+- Performed data analysis
+- Set up the Python EDA environment
+
+## Author
+KAMBAM JAGADEESH KUMAR REDDY
+
+## Getting Started (Python EDA)
+1. Clone this repository.
+2. Install the required libraries: `pandas`, `numpy`, `matplotlib`, and `jupyter`.
+3. Navigate to the `notebooks/` directory.
+4. Launch Jupyter Notebook and open the relevant notebooks.
 
 ## Daily Progress
 - **Day 1**: Project structure setup, loading data, and initial exploratory data analysis (EDA).
