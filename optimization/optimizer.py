@@ -15,10 +15,17 @@ from pulp import (
 
 class SupplyPrescriptOptimizer:
     """
-    Optimization engine responsible for
-    generating logistics decisions using
-    Linear Programming.
+    Linear Programming optimizer responsible
+    for selecting the best logistics action
+    for every asset.
     """
+
+    ACTIONS = [
+        "inventory",
+        "dispatch",
+        "route",
+        "waiting_time",
+    ]
 
     def __init__(self):
 
@@ -32,20 +39,38 @@ class SupplyPrescriptOptimizer:
     def initialize_variables(self, asset_ids):
         """
         Create one binary decision variable
-        for every asset.
+        for every asset-action combination.
+
+        Example:
+
+        A101_inventory
+        A101_dispatch
+        A101_route
+        A101_waiting_time
         """
 
         self.decision_variables = {
-            asset_id: LpVariable(
-                f"asset_{asset_id}",
-                cat=LpBinary
-            )
+            asset_id: {
+                action: LpVariable(
+                    f"{asset_id}_{action}",
+                    cat=LpBinary
+                )
+                for action in self.ACTIONS
+            }
             for asset_id in asset_ids
         }
 
+    def get_asset_variables(self, asset_id):
+        """
+        Return all decision variables
+        associated with an asset.
+        """
+
+        return self.decision_variables.get(asset_id, {})
+
     def get_variables(self):
         """
-        Return optimization variables.
+        Return all optimization variables.
         """
 
         return self.decision_variables
