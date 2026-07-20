@@ -11,7 +11,27 @@ from pulp import (
     LpBinary,
     LpMaximize,
     lpSum,
+    LpStatus,
+    value,
 )
+
+def add_constraints(self):
+    """
+    Add business constraints to the optimization model.
+
+    Each asset can receive only one
+    optimization action.
+    """
+
+    for asset in self.decision_variables:
+
+        self.problem += (
+            lpSum(
+                self.decision_variables[asset][action]
+                for action in self.ACTIONS
+            ) <= 1,
+            f"One_Action_Per_Asset_{asset}"
+        )
 
 
 class SupplyPrescriptOptimizer:
