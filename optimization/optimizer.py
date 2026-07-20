@@ -9,7 +9,8 @@ from pulp import (
     LpProblem,
     LpVariable,
     LpBinary,
-    LpMaximize
+    LpMaximize,
+    lpSum,
 )
 
 
@@ -40,13 +41,6 @@ class SupplyPrescriptOptimizer:
         """
         Create one binary decision variable
         for every asset-action combination.
-
-        Example:
-
-        A101_inventory
-        A101_dispatch
-        A101_route
-        A101_waiting_time
         """
 
         self.decision_variables = {
@@ -60,17 +54,35 @@ class SupplyPrescriptOptimizer:
             for asset_id in asset_ids
         }
 
-    def get_asset_variables(self, asset_id):
+    def set_objective(self, benefit_scores):
         """
-        Return all decision variables
-        associated with an asset.
+        Maximize total business benefit.
+
+        Parameters
+        ----------
+        benefit_scores : dict
+
+        Example:
+
+        {
+            "A101": {
+                "inventory": 8,
+                "dispatch": 12,
+                "route": 15,
+                "waiting_time": 10
+            }
+        }
         """
 
+        self.problem += lpSum(
+            benefit_scores[asset][action]
+            * self.decision_variables[asset][action]
+            for asset in self.decision_variables
+            for action in self.ACTIONS
+        )
+
+    def get_asset_variables(self, asset_id):
         return self.decision_variables.get(asset_id, {})
 
     def get_variables(self):
-        """
-        Return all optimization variables.
-        """
-
         return self.decision_variables
