@@ -174,3 +174,46 @@ search.fit(X_train, y_train)
 model = search.best_estimator_
 print("\nBest params:", search.best_params_)
 print(f"Best CV ROC-AUC: {search.best_score_:.4f}")
+# ---------------------------------------------------------------------------
+# 6. EVALUATION
+# ---------------------------------------------------------------------------
+y_pred = model.predict(X_test)
+y_proba = model.predict_proba(X_test)[:, 1]
+
+metrics = {
+    "accuracy": accuracy_score(y_test, y_pred),
+    "precision": precision_score(y_test, y_pred),
+    "recall": recall_score(y_test, y_pred),
+    "f1_score": f1_score(y_test, y_pred),
+    "roc_auc": roc_auc_score(y_test, y_proba),
+}
+
+print("\n=== Test Set Performance ===")
+for k, v in metrics.items():
+    print(f"{k:10s}: {v:.4f}")
+
+print("\nClassification report:\n", classification_report(y_test, y_pred, target_names=["On-Time", "Delayed"]))
+
+cm = confusion_matrix(y_test, y_pred)
+print("Confusion matrix:\n", cm)
+
+# ---------------------------------------------------------------------------
+# 7. FEATURE IMPORTANCE PLOT
+# ---------------------------------------------------------------------------
+importances = pd.Series(model.feature_importances_, index=X.columns).sort_values()
+
+plt.figure(figsize=(8, 6))
+importances.plot(kind="barh", color="#4C72B0")
+plt.title("XGBoost Feature Importance - Shipment Delay Prediction")
+plt.xlabel("Importance")
+plt.tight_layout()
+plt.savefig("feature_importance.png", dpi=150)
+print("\nSaved feature_importance.png")
+
+# ROC curve
+plt.figure(figsize=(6, 6))
+RocCurveDisplay.from_predictions(y_test, y_proba)
+plt.title("ROC Curve - Delay Prediction")
+plt.tight_layout()
+plt.savefig("roc_curve.png", dpi=150)
+print("Saved roc_curve.png")
