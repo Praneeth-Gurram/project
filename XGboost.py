@@ -217,3 +217,19 @@ plt.title("ROC Curve - Delay Prediction")
 plt.tight_layout()
 plt.savefig("roc_curve.png", dpi=150)
 print("Saved roc_curve.png")
+# ---------------------------------------------------------------------------
+# 8. PERSIST MODEL + ENCODERS  (consumed by the FastAPI write-back service
+#    and the SciPy/PuLP prescriptive solver in Week 2)
+# ---------------------------------------------------------------------------
+model.save_model("delay_model.json")
+
+with open("encoders.pkl", "wb") as f:
+    pickle.dump(encoders, f)
+
+with open("feature_columns.json", "w") as f:
+    json.dump(list(X.columns), f)
+
+with open("metrics.json", "w") as f:
+    json.dump({k: float(v) for k, v in metrics.items()}, f, indent=2)
+
+print("\nSaved delay_model.json, encoders.pkl, feature_columns.json, metrics.json")
