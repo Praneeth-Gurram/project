@@ -233,3 +233,42 @@ with open("metrics.json", "w") as f:
     json.dump({k: float(v) for k, v in metrics.items()}, f, indent=2)
 
 print("\nSaved delay_model.json, encoders.pkl, feature_columns.json, metrics.json")
+# ---------------------------------------------------------------------------
+# 9. INFERENCE HELPER
+#    Called by the FastAPI endpoint (e.g. POST /predict) that feeds the
+#    Retool/React dashboard and, when delay probability crosses a threshold,
+#    triggers the Prescriptive Solver to generate the 3 alternatives.
+# ---------------------------------------------------------------------------
+def predict_delay_probability(record: dict, model=model, encoders=encoders, feature_cols=list(X.columns)):
+    """
+    record: dict with raw field values matching the original dataset columns
+            (Asset_ID, Latitude, Longitude, Inventory_Level, Temperature,
+             Humidity, Waiting_Time, User_Transaction_Amount,
+             User_Purchase_Frequency, Logistics_Delay_Reason,
+             Asset_Utilization, Demand_Forecast, Timestamp)
+    returns: probability (0-1) that the shipment will be delayed
+    """
+    row = record.copy()
+    ts = pd.to_datetime(row.pop("Timestamp"))
+    row["Hour"] = ts.hour
+    row["DayOfWeek"] = ts.dayofweek
+    row["Month"] = ts.month
+    row["IsWeekend"] = int(ts.dayofweek >= 5)
+    row["Logistics_Delay_Reason"] = row.get("Logistics_Delay_Reason") or "None"
+
+    for col, le in encoders.items():
+        val = row[col]
+        row[col] = le.transform([val])[0] if val in le.classes_ else -1
+
+    x_row = pd.DataFrame([row])[feature_cols]
+    return float(model.predict_proba(x_row)[0, 1])
+
+
+if __name__ == "__main__":
+    sample = df.iloc[0].to_dict()
+    prob = predict_delay_probability({k: sample[k] for k in
+        ["Asset_ID", "Latitude", "Longitude", "Inventory_Level", "Temperature",
+         "Humidity", "Waiting_Time", "User_Transaction_Amount",
+         "User_Purchase_Frequency", "Logistics_Delay_Reason",
+         "Asset_Utilization", "Demand_Forecast", "Timestamp"]})
+    print(f"\nSample inference -> Delay probability: {prob:.3f}")
