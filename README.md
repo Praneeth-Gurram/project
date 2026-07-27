@@ -40,4 +40,5 @@ KAMBAM JAGADEESH KUMAR REDDY
 
 ## Daily Progress
 - **Day 1**: Project structure setup, loading data, and initial exploratory data analysis (EDA).
-- **Day 2**: Data Cleaning and Preprocessing (Upcoming).
+- **Day 2**: Data Cleaning and Preprocessing (Completed). Audited data issues (missing values, incorrect types, whitespaces), imputed missing freight costs grouped by vehicle type, handled missing customer ratings with an Unrated placeholder, standardized text columns, and exported clean data to `data/processed/smart_logistics_clean.csv`.
+
