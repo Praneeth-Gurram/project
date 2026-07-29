@@ -75,15 +75,15 @@ cells.append(nbf.v4.new_code_cell("""def analyze_numerical(column_name, data):
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
     
     # Histogram
-    sns.histplot(data[column_name], kde=False, ax=axes[0], color='skyblue')
+    sns.histplot(data[column_name], kde=False, ax=axes[0], color='teal')
     axes[0].set_title(f'Histogram of {column_name}')
     
     # Boxplot
-    sns.boxplot(x=data[column_name], ax=axes[1], color='lightgreen')
+    sns.boxplot(x=data[column_name], ax=axes[1], color='orange')
     axes[1].set_title(f'Boxplot of {column_name}')
     
     # Density Plot
-    sns.kdeplot(data[column_name], fill=True, ax=axes[2], color='salmon')
+    sns.kdeplot(data[column_name], fill=True, ax=axes[2], color='purple')
     axes[2].set_title(f'Density Plot of {column_name}')
     
     plt.tight_layout()
@@ -164,17 +164,6 @@ for var in cat_vars:
     cells.append(nbf.v4.new_code_cell(f"analyze_categorical('{var}', df)"))
     cells.append(nbf.v4.new_markdown_cell(f"**Business Insight:**\n{interpretations_cat[var]}"))
 
-# Conclusion
-cells.append(nbf.v4.new_markdown_cell("""### 5. Day 3 Conclusion
-We have successfully completed a comprehensive Univariate Analysis. 
-
-**Key Takeaways:**
-- We've established baseline statistics (Mean, Median, Mode, Min, Max) for all critical numerical KPIs.
-- Discovered distributional shapes and outliers using Histograms, Boxplots, and Density Plots.
-- Mapped the frequency and impact of categorical variables, specifically pinning down delay reasons and shipment statuses.
-
-These insights form the foundation for **Bivariate Analysis** (Day 4), where we will investigate relationships between these variables (e.g., How does Traffic_Status affect Waiting_Time?).
-"""))
 
 nb.cells = cells
 
