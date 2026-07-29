@@ -168,7 +168,7 @@ for var in cat_vars:
 nb.cells = cells
 
 # Save notebook
-with open('notebooks/Day_3_Univariate_Analysis.ipynb', 'w') as f:
+with open('notebooks/Day_3_Univariate_Analysis.ipynb', 'w', encoding='utf-8') as f:
     nbf.write(nb, f)
 
 print("Notebook 'notebooks/Day_3_Univariate_Analysis.ipynb' successfully generated!")
