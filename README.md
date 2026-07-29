@@ -41,4 +41,5 @@ KAMBAM JAGADEESH KUMAR REDDY
 ## Daily Progress
 - **Day 1**: Project structure setup, loading data, and initial exploratory data analysis (EDA).
 - **Day 2**: Data Cleaning and Preprocessing (Completed). Audited data issues (missing values, incorrect types, whitespaces), imputed missing freight costs grouped by vehicle type, handled missing customer ratings with an Unrated placeholder, standardized text columns, and exported clean data to `data/processed/smart_logistics_clean.csv`.
+- **Day 3**: Complete Univariate Analysis. Analyzed numerical variables (Mean, Median, Mode, Variance, Standard Deviation, Min, Max, Quartiles) using Histograms, Boxplots, and Density Plots. Analyzed categorical variables (Count, Frequency, Percentage) using Bar Charts and Pie Charts. Provided business insights and professional interpretations for every metric and chart.
 
