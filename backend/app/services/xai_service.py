@@ -31,10 +31,30 @@ class XAIService:
 
     def load_artifacts(self):
         if self.model is None:
-            self.model = xgb.XGBRegressor()
-            self.model.load_model(self.model_path)
+            import os
+            base_artifacts = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "artifacts"))
+            model_paths = [
+                os.path.join(base_artifacts, "xgboost_model.json"),
+                self.model_path,
+                os.path.join(os.path.dirname(__file__), "..", "artifacts", "xgboost_model.json"),
+                "backend/artifacts/xgboost_model.json",
+                "ml/artifacts/xgboost_model.json"
+            ]
+            explainer_paths = [
+                os.path.join(base_artifacts, "explainer.pkl"),
+                self.explainer_path,
+                os.path.join(os.path.dirname(__file__), "..", "artifacts", "explainer.pkl"),
+                "backend/artifacts/explainer.pkl",
+                "ml/artifacts/explainer.pkl"
+            ]
             
-            with open(self.explainer_path, "rb") as f:
+            resolved_model = next((p for p in model_paths if os.path.exists(p)), self.model_path)
+            resolved_explainer = next((p for p in explainer_paths if os.path.exists(p)), self.explainer_path)
+
+            self.model = xgb.XGBRegressor()
+            self.model.load_model(resolved_model)
+            
+            with open(resolved_explainer, "rb") as f:
                 self.explainer = pickle.load(f)
 
     def explain_prediction(self, features_dict: dict):
