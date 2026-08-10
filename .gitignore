@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.vscode/
+*.log
+*.pdf
+website/error_log.txt
+website/index.patch
+backend/operational.db
+node_modules/
+dist/

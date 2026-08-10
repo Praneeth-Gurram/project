@@ -11,9 +11,17 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <!-- Babel Standalone for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Framer Motion & Recharts -->
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="https://unpkg.com/recharts@2.10.3/dist/Recharts.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
     <div class="dashboard-container">
@@ -49,6 +57,175 @@
             <!-- ============================== -->
             <div id="overview-section" class="tab-content active">
                 
+                <!-- GLOBAL FILTERS (SMART LIVE ANALYTICS CONTROL CENTER) -->
+                <section class="glass-card" style="margin-bottom: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;"><i data-lucide="filter"></i> Global Filters</h3>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="filter-search-id" class="glass-input" placeholder="Search Route ID..." style="padding: 5px 10px; min-width: 200px;">
+                            <div style="color: #60a5fa; font-weight: bold; font-size: 0.9rem;" id="filter-matching-records">1,000 matching records</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Time Period</label>
+                            <select id="filter-time" class="glass-input" style="width: 100%;">
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Region</label>
+                            <select id="filter-region" class="glass-input" style="width: 100%;">
+                                <option value="all">All Regions</option>
+                                <option value="North">North</option>
+                                <option value="South">South</option>
+                                <option value="East">East</option>
+                                <option value="West">West</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Warehouse</label>
+                            <select id="filter-warehouse" class="glass-input" style="width: 100%;">
+                                <option value="all">All Warehouses</option>
+                                <option value="WH-1">WH-1</option>
+                                <option value="WH-2">WH-2</option>
+                                <option value="WH-3">WH-3</option>
+                                <option value="WH-4">WH-4</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Vehicle Type</label>
+                            <select id="filter-vehicle" class="glass-input" style="width: 100%;">
+                                <option value="all">All Vehicles</option>
+                                <option value="Truck">Truck</option>
+                                <option value="Van">Van</option>
+                                <option value="Drone">Drone</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Traffic Condition</label>
+                            <select id="filter-traffic" class="glass-input" style="width: 100%;">
+                                <option value="all">All Conditions</option>
+                                <option value="Heavy">Heavy</option>
+                                <option value="Moderate">Moderate</option>
+                                <option value="Light">Light</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Delivery Status</label>
+                            <select id="filter-status" class="glass-input" style="width: 100%;">
+                                <option value="all">All Statuses</option>
+                                <option value="Delivered">Delivered</option>
+                                <option value="In Transit">In Transit</option>
+                                <option value="Delayed">Delayed</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Delivery Priority</label>
+                            <select id="filter-priority" class="glass-input" style="width: 100%;">
+                                <option value="all">All Priorities</option>
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Weather Condition</label>
+                            <select id="filter-weather" class="glass-input" style="width: 100%;">
+                                <option value="all">All Weather</option>
+                                <option value="Clear">Clear</option>
+                                <option value="Rain">Rain</option>
+                                <option value="Storm">Storm</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Geo Cluster</label>
+                            <select id="filter-geocluster" class="glass-input" style="width: 100%;">
+                                <option value="all">All Clusters</option>
+                                <option value="Cluster_A">Cluster A</option>
+                                <option value="Cluster_B">Cluster B</option>
+                                <option value="Cluster_C">Cluster C</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Driver</label>
+                            <select id="filter-driver" class="glass-input" style="width: 100%;">
+                                <option value="all">All Drivers</option>
+                                <option value="D-101">D-101</option>
+                                <option value="D-102">D-102</option>
+                                <option value="D-103">D-103</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                        <div id="active-filter-chips" style="display: flex; gap: 10px; flex-wrap: wrap; flex: 1;">
+                            <span style="color: #9ca3af; font-size: 0.9rem; margin-top: 5px;">No active filters</span>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="btn-filter-reset" class="glass-btn">Reset</button>
+                            <button id="btn-filter-apply" class="glass-btn primary">Apply</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Smart AI Insight & Prescriptive Recommendation -->
+                <section id="ai-insight-section" class="charts-grid" style="grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 2rem; display: none; animation: fadeIn 0.5s ease-out;">
+                    <div class="glass-card" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3);">
+                        <h3 style="color: #93c5fd; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                            <i data-lucide="bar-chart-2"></i> Data-Driven Insight
+                        </h3>
+                        <p id="insight-text" style="font-size: 1.1rem; line-height: 1.6; color: #e2e8f0; margin-bottom: 15px;">
+                            --
+                        </p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
+                                <div style="font-size: 0.8rem; color: #9ca3af;">Primary Risk</div>
+                                <div id="insight-primary-risk" style="font-size: 1.1rem; font-weight: bold; color: #f87171;">--</div>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
+                                <div style="font-size: 0.8rem; color: #9ca3af;">Average Delay</div>
+                                <div id="insight-avg-delay" style="font-size: 1.1rem; font-weight: bold; color: #fbbf24;">--</div>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
+                                <div style="font-size: 0.8rem; color: #9ca3af;">Affected Deliveries</div>
+                                <div id="insight-affected" style="font-size: 1.1rem; font-weight: bold; color: #e2e8f0;">--</div>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
+                                <div style="font-size: 0.8rem; color: #9ca3af;">Analytics Confidence</div>
+                                <div id="insight-confidence" style="font-size: 1.1rem; font-weight: bold; color: #4ade80;">94%</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);">
+                        <h3 style="color: #34d399; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                            <i data-lucide="check-circle"></i> Recommended Action
+                        </h3>
+                        <p id="rec-text" style="font-size: 1.1rem; line-height: 1.6; color: #e2e8f0; margin-bottom: 15px;">
+                            --
+                        </p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
+                                <div style="font-size: 0.8rem; color: #9ca3af;">Potential Delay Reduction</div>
+                                <div id="rec-delay-reduction" style="font-size: 1.1rem; font-weight: bold; color: #4ade80;">--</div>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
+                                <div style="font-size: 0.8rem; color: #9ca3af;">Estimated Cost Impact</div>
+                                <div id="rec-cost-impact" style="font-size: 1.1rem; font-weight: bold; color: #4ade80;">--</div>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; grid-column: span 2;">
+                                <div style="font-size: 0.8rem; color: #9ca3af;">Priority Level</div>
+                                <div id="rec-priority" style="font-size: 1.1rem; font-weight: bold; color: #fbbf24;">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
                 <!-- Patch 10 & 11: Health Score & Executive Summary -->
                 <section class="charts-grid" style="grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 2rem;">
                     <!-- Health Score -->
@@ -75,7 +252,7 @@
                             <p>Overall network risk has decreased by <strong>18%</strong> compared to yesterday following automated rerouting.</p>
                         </div>
                     </div>
-                </section>
+                <div id="react-kpi-root" style="margin-bottom: 2rem;"></div>
                 <section class="kpi-grid">
                     <div class="glass-card kpi-card">
                         <h3>Total Deliveries</h3>
@@ -177,44 +354,55 @@
             <!-- 4. EXECUTIVE REPORTS           -->
             <!-- ============================== -->
             <div id="reports-section" class="tab-content hidden">
-                <div class="glass-card report-card">
-                    <h2>Business Recommendations</h2>
-                    <br>
-                    <h3>1. Route Optimization & Geo-Clustering</h3>
-                    <p>Implement dynamic routing algorithms specifically for the worst-performing Geo_Clusters. Allocate overflow assets to these regions during historical peak demand months.</p>
-                    <br>
-                    <h3>2. Driver & Asset Performance Improvement</h3>
-                    <p>Institute targeted training programs for drivers of assets in the bottom 25% of the performance score. Implement preventative maintenance schedules for vehicles that repeatedly log "Vehicle Breakdown".</p>
-                    <br>
-                    <h3>3. Cost Optimization & Revenue Alignment</h3>
-                    <p>Introduce a tiered SLA system. High-value transactions must be algorithmically prioritized in dispatching queues over low-value, standard deliveries.</p>
-                    <br>
-                    <h3>4. Delay Reduction via Predictive Modeling</h3>
-                    <p>Integrate real-time weather and traffic APIs. When an Extreme_Weather_Flag is anticipated, automatically pad estimated delivery times (ETAs) by 25%.</p>
-                    <br>
-                    <h3>5. Vehicle Utilization</h3>
-                    <p>Develop a hybrid fleet model. Maintain a core fleet running at 80% utilization for baseline demand, and rely on 3PL (Third-Party Logistics) contractors specifically for the top 15% of peak demand days.</p>
+                <div id="react-reports-root" style="margin-bottom: 2rem;"></div>
+                <!-- Executive Summary Box -->
+                <div class="glass-card report-card" style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;"><i data-lucide="briefcase"></i> Executive Recommendation Summary</h2>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <span style="font-size: 0.85rem; color: #9ca3af;">Sort By:</span>
+                            <select id="rec-sort-select" class="glass-input" style="padding: 5px 10px;">
+                                <option value="priority">Priority (High to Low)</option>
+                                <option value="category">Category (A-Z)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                        <div class="kpi-card" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; text-align: center;">
+                            <div style="color: #9ca3af; font-size: 0.85rem;">Total Recommendations</div>
+                            <div id="rec-total-count" style="font-size: 1.8rem; font-weight: bold; color: #fff;">0</div>
+                        </div>
+                        <div class="kpi-card" style="background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.3); padding: 15px; border-radius: 10px; text-align: center;">
+                            <div style="color: #fca5a5; font-size: 0.85rem;">High Priority</div>
+                            <div id="rec-high-count" style="font-size: 1.8rem; font-weight: bold; color: #f87171;">0</div>
+                        </div>
+                        <div class="kpi-card" style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); padding: 15px; border-radius: 10px; text-align: center;">
+                            <div style="color: #fcd34d; font-size: 0.85rem;">Medium Priority</div>
+                            <div id="rec-medium-count" style="font-size: 1.8rem; font-weight: bold; color: #fbbf24;">0</div>
+                        </div>
+                        <div class="kpi-card" style="background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); padding: 15px; border-radius: 10px; text-align: center;">
+                            <div style="color: #86efac; font-size: 0.85rem;">Low Priority</div>
+                            <div id="rec-low-count" style="font-size: 1.8rem; font-weight: bold; color: #4ade80;">0</div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="glass-card report-card mt-2">
-                    <h2>Executive Summary</h2>
-                    <br>
-                    <p><strong>Dataset & Cleaning:</strong> Evaluated 1000 simulated delivery records. Cleaned timestamps, categorized missing logistics delays, and prepared the data for modeling.</p>
-                    <p><strong>EDA & Correlations:</strong> Discovered positive correlations between Demand_Forecast and Waiting_Time. Identified that extreme traffic coupled with weather leads to systemic failure.</p>
-                    <p><strong>Outlier Analysis:</strong> Analyzed outliers in Transaction Amounts (high-tier B2B accounts) and Waiting Time (systemic failures). Decided to retain these as they represent critical edge cases for business planning.</p>
-                    <p><strong>Feature Engineering:</strong> Created Geo_Clusters, Extreme_Weather_Flag, Revenue_Per_Wait_Minute, and Asset_Performance_Score to provide targeted actionable analytics.</p>
+
+                <!-- Dynamic Recommendations Container -->
+                <div id="recommendations-container" style="display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Recommendation cards will be injected here via script.js -->
                 </div>
             </div>
 
             <!-- ============================== -->
             <!-- 5. EXPLAINABLE AI (XAI)        -->
             <!-- ============================== -->
-            <div id="xai-section" class="tab-content" style="display: none;">
+            <div id="xai-section" class="tab-content hidden">
                 
-                <div class="xai-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div class="xai-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                     <div>
-                        <h2 style="margin: 0; color: #fff;">Supply Prescript: Explainable AI</h2>
-                        <p style="margin: 0; color: #a0aec0;">Transparent AI-driven predictive logistics & prescriptive recommendations</p>
+                        <h2 style="margin: 0; color: #fff;">Explainable AI Module</h2>
+                        <p style="margin: 0; color: #a0aec0;">Transparent insights and prescriptive recommendations.</p>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <button id="xai-prev-btn" class="glass-btn">Prev Shipment</button>
@@ -223,103 +411,221 @@
                     </div>
                 </div>
 
-                <div class="xai-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div class="xai-section-container" style="display: grid; gap: 24px;">
                     
-                    <!-- Risk Assessment & Why Panel -->
-                    <div class="glass-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h3 style="margin: 0;">Shipment Risk Assessment</h3>
-                            <span id="xai-risk-badge" style="padding: 5px 10px; border-radius: 5px; font-weight: bold; background: #991b1b; color: #fca5a5;">High</span>
+                    <!-- 2. RECOMMENDATION CARD -->
+                    <div class="xai-card xai-rec-highlight" style="grid-column: 1 / -1;">
+                        <h3><i data-lucide="zap"></i> Prescriptive AI Recommendation</h3>
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; align-items: start;">
+                            <div style="grid-column: span 1; border-right: 1px solid rgba(16,185,129,0.2); padding-right: 15px;">
+                                <div style="color: #9ca3af; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 5px;">Recommended Action</div>
+                                <div id="xai-rec-action" style="font-size: 1.1rem; font-weight: bold; color: #fff; line-height: 1.3;">--</div>
+                            </div>
+                            <div style="grid-column: span 1; border-right: 1px solid rgba(16,185,129,0.2); padding-right: 15px;">
+                                <div style="color: #9ca3af; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 5px;">Expected Impact</div>
+                                <div id="xai-rec-impact" style="font-size: 1.3rem; font-weight: bold; color: #6ee7b7;">--</div>
+                            </div>
+                            <div style="grid-column: span 1; border-right: 1px solid rgba(16,185,129,0.2); padding-right: 15px;">
+                                <div style="color: #9ca3af; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 5px;">Risk Reduction</div>
+                                <div id="xai-rec-risk" style="font-size: 1.3rem; font-weight: bold; color: #6ee7b7;">--</div>
+                            </div>
+                            <div style="grid-column: span 1; border-right: 1px solid rgba(16,185,129,0.2); padding-right: 15px;">
+                                <div style="color: #9ca3af; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 5px;">Cost</div>
+                                <div id="xai-rec-cost" style="font-size: 1.3rem; font-weight: bold; color: #e5e7eb;">--</div>
+                            </div>
+                            <div style="grid-column: span 1;">
+                                <div style="color: #9ca3af; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 5px;">Confidence</div>
+                                <div id="xai-rec-conf" style="font-size: 1.3rem; font-weight: bold; color: #e5e7eb;">--</div>
+                            </div>
                         </div>
-                        
-                        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-                            <div style="flex: 1; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
-                                <div style="color: #9ca3af; font-size: 0.8rem; text-transform: uppercase;">Predicted Delay</div>
-                                <div id="xai-predicted-delay" style="font-size: 1.8rem; font-weight: bold; color: #f87171;">-- mins</div>
+                    </div>
+
+                    <div class="xai-grid-row">
+                        <!-- 3. FEATURE CONTRIBUTION -->
+                        <div class="xai-card">
+                            <h3><i data-lucide="bar-chart-2"></i> Why did AI make this decision?</h3>
+                            <p style="font-size: 0.85rem; color: #a0aec0; margin-bottom: 15px;">Feature Contribution Analysis</p>
+                            <div id="xai-feature-bars-container">
+                                <!-- Dynamic bars will go here -->
                             </div>
-                            <div style="flex: 1; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
-                                <div style="color: #9ca3af; font-size: 0.8rem; text-transform: uppercase;">Probability</div>
-                                <div id="xai-probability" style="font-size: 1.8rem; font-weight: bold; color: #fbbf24;">--</div>
-                            </div>
-                            <div style="flex: 1; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
-                                <div style="color: #9ca3af; font-size: 0.8rem; text-transform: uppercase;">AI Confidence</div>
-                                <div id="xai-confidence" style="font-size: 1.8rem; font-weight: bold; color: #4ade80;">--</div>
+                            <div style="display: flex; gap: 15px; font-size: 0.75rem; color: #6b7280; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                                <span><span style="display:inline-block; width:10px; height:10px; background:var(--green); border-radius:2px; margin-right:5px; vertical-align: middle;"></span> Reduces Risk</span>
+                                <span><span style="display:inline-block; width:10px; height:10px; background:var(--red); border-radius:2px; margin-right:5px; vertical-align: middle;"></span> Increases Risk</span>
                             </div>
                         </div>
-                        
-                        <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
-                        
-                        <div style="background: rgba(30, 58, 138, 0.2); border: 1px solid rgba(59, 130, 246, 0.3); padding: 20px; border-radius: 10px; display: flex; gap: 15px;">
-                            <div style="font-size: 1.5rem;">ℹ️</div>
+
+                        <!-- 4. DECISION FLOW -->
+                        <div class="xai-card">
+                            <h3><i data-lucide="git-merge"></i> AI Decision Flow</h3>
+                            <div class="xai-flow-container" id="xai-decision-flow" style="gap: 15px;">
+                                <div class="xai-flow-node">High Forecasted Demand</div>
+                                <div class="xai-flow-arrow">↓</div>
+                                <div class="xai-flow-node">Low Current Inventory</div>
+                                <div class="xai-flow-arrow">↓</div>
+                                <div class="xai-flow-node" style="border-color: rgba(248,113,113,0.5); color: #fca5a5;">Stockout Risk Increased</div>
+                                <div class="xai-flow-arrow">↓</div>
+                                <div class="xai-flow-node">Constraints Checked</div>
+                                <div class="xai-flow-arrow">↓</div>
+                                <div class="xai-flow-node" style="border-color: rgba(16,185,129,0.5); color: #6ee7b7; background: rgba(16,185,129,0.1);">Optimal Recommendation Generated</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. WHAT-IF DECISION SIMULATOR -->
+                    <div class="xai-card" style="grid-column: 1 / -1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                             <div>
-                                <h4 style="margin: 0 0 10px 0; color: #93c5fd;">Why did the AI predict this?</h4>
-                                <p id="xai-business-explanation" style="margin: 0; color: #e5e7eb; line-height: 1.5;">...</p>
+                                <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;"><i data-lucide="sliders"></i> What-If Decision Simulator</h3>
+                                <p style="font-size: 0.8rem; color: #a0aec0; margin: 4px 0 0 0;">Modify operational conditions to see dynamic predictions, SciPy optimization, and budget safety verification.</p>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Confidence Indicators -->
-                    <div class="glass-card">
-                        <h3 style="margin-top: 0;">System Confidence Indicators</h3>
-                        <div id="xai-confidence-bars" style="margin-top: 20px;">
-                            <!-- Injected by JS -->
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- SHAP Feature Contributions -->
-                <div class="glass-card" style="margin-bottom: 20px;">
-                    <h3 style="margin-top: 0; margin-bottom: 20px;">SHAP Feature Contributions (Local Explanation)</h3>
-                    <div id="xai-shap-bars" style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
-                        <!-- Injected by JS -->
-                    </div>
-                </div>
-
-                <!-- Recommendation Output -->
-                <div id="xai-recommendation-panel" class="glass-card" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); display: none;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                        <span style="font-size: 1.5rem;">✅</span>
-                        <h3 style="margin: 0; color: #34d399;" id="xai-rec-title">Prescriptive AI Recommendation</h3>
-                    </div>
-                    
-                    <p id="xai-rec-reason" style="margin: 0 0 20px 0; padding-left: 15px; border-left: 4px solid #10b981; color: #e5e7eb; font-size: 1.1rem;">...</p>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
-                            <h4 style="margin: 0 0 15px 0; color: #9ca3af; font-size: 0.8rem; text-transform: uppercase;">Before Action</h4>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                <span>Predicted Delay:</span>
-                                <span id="xai-rec-before-delay" style="color: #fca5a5; font-weight: bold;">--</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Risk Level:</span>
-                                <span id="xai-rec-before-risk" style="color: #fca5a5; font-weight: bold;">--</span>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <span id="web-sim-status-chip" style="background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4); color: #34d399; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">Constraint Passed</span>
+                                <button class="glass-btn" id="sim-reset-btn"><i data-lucide="rotate-ccw"></i> Reset Scenario</button>
                             </div>
                         </div>
                         
-                        <div style="background: rgba(6, 78, 59, 0.4); padding: 15px; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.3);">
-                            <h4 style="margin: 0 0 15px 0; color: #34d399; font-size: 0.8rem; text-transform: uppercase;">Expected Outcome</h4>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                <span>Delay Reduction:</span>
-                                <span id="xai-rec-after-delay" style="color: #6ee7b7; font-weight: bold;">--</span>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div>
+                                <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Traffic Condition</label>
+                                <select id="web-sim-traffic" class="glass-input" style="width: 100%;">
+                                    <option value="Clear">Clear Traffic</option>
+                                    <option value="Heavy">Heavy Traffic</option>
+                                    <option value="Detour">Detour Route</option>
+                                </select>
                             </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                <span>Expected Savings:</span>
-                                <span id="xai-rec-after-savings" style="color: #6ee7b7; font-weight: bold;">--</span>
+                            <div>
+                                <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Weather Temp (°C)</label>
+                                <input type="range" class="xai-slider" id="web-sim-temp" min="15" max="45" value="25" step="1">
+                                <div style="font-size: 0.75rem; color: #60a5fa; text-align: right;" id="val-web-temp">25°C</div>
                             </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                <span>ROI:</span>
-                                <span id="xai-rec-after-roi" style="color: #6ee7b7; font-weight: bold;">--</span>
+                            <div>
+                                <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Delivery Priority</label>
+                                <input type="range" class="xai-slider" id="web-sim-priority" min="1" max="10" value="5" step="1">
+                                <div style="font-size: 0.75rem; color: #fbbf24; text-align: right;" id="val-web-priority">Level 5</div>
                             </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Confidence:</span>
-                                <span id="xai-rec-after-conf" style="color: #6ee7b7; font-weight: bold;">--</span>
+                            <div>
+                                <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Vehicle Availability</label>
+                                <input type="range" class="xai-slider" id="web-sim-avail" min="10" max="100" value="75" step="1">
+                                <div style="font-size: 0.75rem; color: #34d399; text-align: right;" id="val-web-avail">75%</div>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Hard Budget (₹)</label>
+                                <input type="range" class="xai-slider" id="web-sim-budget" min="3000" max="35000" value="12500" step="500">
+                                <div style="font-size: 0.75rem; color: #4ade80; text-align: right;" id="val-web-budget">₹12,500</div>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Route Option</label>
+                                <select id="web-sim-route" class="glass-input" style="width: 100%;">
+                                    <option value="Auto">Auto (SciPy LP)</option>
+                                    <option value="Standard Truck">Standard Truck</option>
+                                    <option value="Air Freight">Air Freight</option>
+                                    <option value="Rail">Rail Freight</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Before vs After Table & Explanation -->
+                        <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 20px;">
+                            <!-- Before vs After Comparison Table -->
+                            <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                                <h4 style="margin: 0 0 10px 0; color: #e2e8f0; font-size: 0.9rem;">BEFORE VS AFTER COMPARISON</h4>
+                                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                                    <thead>
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">
+                                            <th style="padding: 6px; color: #9ca3af;">PARAMETER</th>
+                                            <th style="padding: 6px; color: #60a5fa; text-align: center;">CURRENT</th>
+                                            <th style="padding: 6px; color: #c084fc; text-align: center;">WHAT-IF</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                            <td style="padding: 6px; color: #cbd5e1;">Traffic Condition</td>
+                                            <td style="padding: 6px; text-align: center;" id="web-curr-traffic">Clear</td>
+                                            <td style="padding: 6px; text-align: center; font-weight: bold; color: #f3e8ff;" id="web-sim-traffic-val">Clear</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                            <td style="padding: 6px; color: #cbd5e1;">Predicted Delay</td>
+                                            <td style="padding: 6px; text-align: center; color: #f87171;" id="web-curr-delay">18 min</td>
+                                            <td style="padding: 6px; text-align: center; font-weight: bold; color: #4ade80;" id="web-sim-delay-val">18 min</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                            <td style="padding: 6px; color: #cbd5e1;">Risk Level</td>
+                                            <td style="padding: 6px; text-align: center;" id="web-curr-risk">Low</td>
+                                            <td style="padding: 6px; text-align: center; font-weight: bold;" id="web-sim-risk-val">Low</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                            <td style="padding: 6px; color: #cbd5e1;">Estimated Cost</td>
+                                            <td style="padding: 6px; text-align: center; color: #fbbf24;" id="web-curr-cost">₹10,000</td>
+                                            <td style="padding: 6px; text-align: center; font-weight: bold; color: #fbbf24;" id="web-sim-cost-val">₹10,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 6px; color: #cbd5e1; font-weight: bold;">Recommendation</td>
+                                            <td style="padding: 6px; text-align: center; color: #34d399;" id="web-curr-rec">Standard Truck</td>
+                                            <td style="padding: 6px; text-align: center; font-weight: bold; color: #34d399;" id="web-sim-rec-val">Standard Truck</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Recommended Action & Explanation Box -->
+                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                                <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); padding: 15px; border-radius: 8px;">
+                                    <div style="color: #9ca3af; font-size: 0.75rem; text-transform: uppercase; font-weight: bold;">Recommended Action</div>
+                                    <div id="web-sim-rec-action" style="font-size: 1.3rem; font-weight: bold; color: #34d399; margin-top: 5px;">Standard Truck</div>
+                                </div>
+
+                                <div style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3); padding: 15px; border-radius: 8px; flex: 1;">
+                                    <div style="color: #a5b4fc; font-size: 0.8rem; font-weight: bold; margin-bottom: 8px;"><i data-lucide="info"></i> Why did the recommendation change?</div>
+                                    <ul id="web-sim-reasons-list" style="margin: 0; padding-left: 18px; color: #cbd5e1; font-size: 0.8rem; line-height: 1.5;">
+                                        <li>Operational conditions match baseline dataset parameters.</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
+                    <div class="xai-grid-row">
+                        <!-- 6. OPTIMIZATION CONSTRAINT CHECK -->
+                        <div class="xai-card">
+                            <h3><i data-lucide="check-square"></i> Optimization Constraint Verification</h3>
+                            <div id="xai-constraints-panel" style="margin-top: 15px;">
+                                <div class="xai-check-item pass"><span>Budget Constraint</span><strong id="xai-chk-budget">--/--</strong><span class="status-icon">✓</span></div>
+                                <div class="xai-check-item pass"><span>Warehouse Capacity</span><strong id="xai-chk-wh">--/--</strong><span class="status-icon">✓</span></div>
+                                <div class="xai-check-item pass"><span>Transportation Capacity</span><strong id="xai-chk-trans">--/--</strong><span class="status-icon">✓</span></div>
+                                <div class="xai-check-item pass"><span>Minimum Stock Requirement</span><strong id="xai-chk-minstock">Passed</strong><span class="status-icon">✓</span></div>
+                                <div class="xai-check-item pass"><span>Supplier Capacity</span><strong id="xai-chk-supp">Passed</strong><span class="status-icon">✓</span></div>
+                                <div class="xai-check-item pass" style="margin-top: 15px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);">
+                                    <span>Solver Status</span><strong id="xai-chk-solver" style="color: #6ee7b7;">OPTIMAL</strong><span class="status-icon">✓</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 7. COUNTERFACTUAL ANALYSIS -->
+                        <div class="xai-card">
+                            <h3><i data-lucide="help-circle"></i> What would change the recommendation?</h3>
+                            <div id="xai-counterfactuals" style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px;">
+                                <div style="background: rgba(0,0,0,0.3); border-left: 3px solid #60a5fa; padding: 12px 15px; border-radius: 0 6px 6px 0;">
+                                    <div style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 5px;">Demand decreases by 12%</div>
+                                    <div style="color: #93c5fd; font-weight: bold;">→ Lower allocation recommended</div>
+                                </div>
+                                <div style="background: rgba(0,0,0,0.3); border-left: 3px solid #f59e0b; padding: 12px 15px; border-radius: 0 6px 6px 0;">
+                                    <div style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 5px;">Lead time increases by 20%</div>
+                                    <div style="color: #fcd34d; font-weight: bold;">→ Increase safety stock</div>
+                                </div>
+                                <div style="background: rgba(0,0,0,0.3); border-left: 3px solid #f87171; padding: 12px 15px; border-radius: 0 6px 6px 0;">
+                                    <div style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 5px;">Transportation cost increases by 15%</div>
+                                    <div style="color: #fca5a5; font-weight: bold;">→ Alternative warehouse may become optimal</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 8. EXPLANATION SUMMARY (Optional, can keep at bottom if useful) -->
+                    <div class="xai-summary-text" id="xai-summary-text" style="grid-column: 1 / -1;">
+                        Generating explanation...
+                    </div>
+
+                </div>
             </div>
 
         </main>
@@ -397,6 +703,53 @@
                 </div>
             </div>
 
+            <!-- Optimization Audit (New Feature) -->
+            <div class="drawer-section">
+                <h4 style="display: flex; align-items: center; justify-content: space-between;">
+                    <span><i data-lucide="check-square" style="width: 16px;"></i> Optimization Audit</span>
+                    <button id="toggle-audit-btn" style="background: none; border: none; color: #60a5fa; cursor: pointer; font-size: 0.8rem;">View Solver Details</button>
+                </h4>
+                
+                <div id="audit-table-container" style="display: none; margin-top: 10px; font-size: 0.85rem; background: rgba(0,0,0,0.2); border-radius: 5px; padding: 12px; line-height: 1.6;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Solver Status</span>
+                        <strong id="audit-solver-status">✓ OPTIMAL</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Budget Constraint</span>
+                        <strong id="audit-maximum-budget">$0</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Optimized Cost</span>
+                        <strong id="audit-optimized-cost">$0</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Remaining Budget</span>
+                        <strong id="audit-remaining-budget">$0</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Budget Utilization</span>
+                        <strong id="audit-budget-utilization">0%</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 5px; padding-top: 5px;">
+                        <span>Constraint Status</span>
+                        <strong id="audit-constraint-status">✓ PASSED</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Recommendation</span>
+                        <strong id="audit-recommendation">✓ FEASIBLE</strong>
+                    </div>
+                </div>
+
+                <div id="execution-blocked-msg" style="display: none; margin-top: 10px; font-size: 0.85rem; background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.5); color: #f87171; border-radius: 5px; padding: 10px;">
+                    Execution blocked: recommended action exceeds the defined hard budget constraint.
+                </div>
+
+                <div id="execution-feedback" style="display: none; margin-top: 15px; padding: 10px; border-radius: 5px;">
+                    <!-- Execution message injected here -->
+                </div>
+            </div>
+
             <!-- Action Buttons -->
             <div class="drawer-actions">
                 <button id="btn-explain" class="glass-btn" style="flex: 1;"><i data-lucide="brain"></i> Explain</button>
@@ -445,6 +798,8 @@
     <!-- ============================== -->
     <div id="notification-container"></div>
     
-    <script src="script.js"></script>
+    <script src="script.js?v=2"></script>
+    <script type="text/babel" src="kpi-dashboard.jsx"></script>
+    <script type="text/babel" src="reports-dashboard.jsx"></script>
 </body>
 </html>

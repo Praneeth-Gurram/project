@@ -3,7 +3,7 @@
 This document serves as the architectural blueprint for importing the `smart_logistics_engineered.csv` dataset into Power BI and developing a comprehensive BI dashboard solution.
 
 ## 1. Data Preparation
-- **Import Source:** `smart_logistics_engineered.csv`
+- **Import Source:** r"C:\Users\HP\Downloads\smart_logistics_dataset.xlsx"
 - **Data Types Validation:** Ensure `Timestamp` is a Date/Time hierarchy. Ensure `Geo_Cluster`, `Asset_ID`, and `Extreme_Weather_Flag` are treated as Categorical text.
 - **Relationships:** Since we are using a flat table, no star schema modeling is required for this phase.
 
