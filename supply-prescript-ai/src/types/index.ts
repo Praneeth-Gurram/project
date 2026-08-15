@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 export interface StatCardData {
   title: string
   value: string
@@ -18,5 +20,5 @@ export interface TableRow {
 export interface PageHeaderProps {
   title: string
   description: string
-  action?: React.ReactNode
+  action?: ReactNode
 }

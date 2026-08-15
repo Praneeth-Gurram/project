@@ -8,7 +8,7 @@ from typing import Any
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-
+from fastapi.middleware.cors import CORSMiddleware
 from api.services.prediction_service import PredictionService
 from api.services.optimization_service import OptimizationService
 
@@ -19,6 +19,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 prediction_service = PredictionService()
 optimization_service = OptimizationService()
@@ -70,15 +77,31 @@ def health_check():
 def predict(request: LogisticsRequest):
     """
     Generate logistics delay probabilities.
+
+    Asset_ID is used only to identify each prediction
+    in the API response and is not passed to the model.
     """
 
     try:
         data = pd.DataFrame(request.data)
 
+        # Keep asset IDs for response mapping.
+        asset_ids = data["Asset_ID"].tolist() if "Asset_ID" in data.columns else [
+            f"Asset_{i + 1}" for i in range(len(data))
+        ]
+
         probabilities = prediction_service.predict_probability(data)
 
+        predictions = [
+            {
+                "asset_id": asset_id,
+                "delay_probability": float(probability),
+            }
+            for asset_id, probability in zip(asset_ids, probabilities)
+        ]
+
         return {
-            "predictions": probabilities.tolist()
+            "predictions": predictions
         }
 
     except ValueError as exc:
@@ -86,7 +109,6 @@ def predict(request: LogisticsRequest):
             status_code=400,
             detail=str(exc),
         )
-
 
 @app.post("/optimize")
 def optimize(request: OptimizationRequest):
