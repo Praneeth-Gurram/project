@@ -174,3 +174,20 @@ search.fit(X_train, y_train)
 model = search.best_estimator_
 print("\nBest params:", search.best_params_)
 print(f"Best CV ROC-AUC: {search.best_score_:.4f}")
+
+# ---------------------------------------------------------------------------
+# 6. SAVE TRAINED MODEL FOR FASTAPI
+# ---------------------------------------------------------------------------
+
+MODEL_PATH = "api/xgboost_model.pkl"
+
+model_data = {
+    "model": model,
+    "feature_cols": FEATURE_COLS,
+}
+
+with open(MODEL_PATH, "wb") as file:
+    pickle.dump(model_data, file)
+
+print(f"\nModel saved successfully to: {MODEL_PATH}")
+print(f"Saved features: {FEATURE_COLS}")
