@@ -45,20 +45,36 @@ class PredictionService:
         self.model = model_data["model"]
         self.feature_cols = model_data["feature_cols"]
 
-    def predict_probability(self, data):
+    def _prepare_features(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Generate delay probability for
-        the supplied logistics data.
+        Prepare raw logistics data for the XGBoost model.
 
-        Parameters
-        ----------
-        data : pandas.DataFrame
-
-        Returns
-        -------
-        pandas.Series
-            Probability of logistics delay.
+        Timestamp is used to derive:
+        - Hour
+        - DayOfWeek
+        - Month
+        - IsWeekend
         """
+
+        data = data.copy()
+
+        if "Timestamp" in data.columns:
+            data["Timestamp"] = pd.to_datetime(
+                data["Timestamp"],
+                errors="coerce"
+            )
+
+            if data["Timestamp"].isna().any():
+                raise ValueError(
+                    "Invalid Timestamp value found in input data."
+                )
+
+            data["Hour"] = data["Timestamp"].dt.hour
+            data["DayOfWeek"] = data["Timestamp"].dt.dayofweek
+            data["Month"] = data["Timestamp"].dt.month
+            data["IsWeekend"] = (
+                data["DayOfWeek"] >= 5
+            ).astype(int)
 
         missing_columns = [
             column
@@ -72,6 +88,35 @@ class PredictionService:
             )
 
         features = data[self.feature_cols].copy()
+
+        if features.isnull().any().any():
+            missing = features.columns[
+                features.isnull().any()
+            ].tolist()
+
+            raise ValueError(
+                f"Missing values found in features: {missing}"
+            )
+
+        return features
+
+    def predict_probability(self, data: pd.DataFrame) -> pd.Series:
+        """
+        Generate delay probabilities for
+        supplied logistics data.
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+            Raw logistics data.
+
+        Returns
+        -------
+        pandas.Series
+            Probability of logistics delay.
+        """
+
+        features = self._prepare_features(data)
 
         probabilities = self.model.predict_proba(features)[:, 1]
 

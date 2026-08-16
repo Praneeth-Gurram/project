@@ -48,6 +48,13 @@ class OptimizationRequest(BaseModel):
 
     predictions: dict[str, float]
 
+class AnalyzeRequest(BaseModel):
+    """
+    Raw logistics records used for prediction
+    and prescriptive optimization.
+    """
+
+    data: list[dict[str, Any]]
 
 @app.get("/")
 def root():
@@ -124,6 +131,43 @@ def optimize(request: OptimizationRequest):
 
         return {
             "recommendations": recommendations
+        }
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        )
+
+@app.post("/analyze")
+def analyze(request: AnalyzeRequest):
+    """
+    Run prediction and optimization together.
+    """
+
+    try:
+        data = pd.DataFrame(request.data)
+
+        # Generate delay probabilities
+        probabilities = prediction_service.predict_probability(data)
+
+        # Build Asset_ID -> probability mapping
+        predictions = {
+            str(asset_id): float(probability)
+            for asset_id, probability in zip(
+                data["Asset_ID"],
+                probabilities
+            )
+        }
+
+        # Run optimization
+        recommendations = optimization_service.optimize(
+            predictions
+        )
+
+        return {
+            "predictions": predictions,
+            "recommendations": recommendations,
         }
 
     except ValueError as exc:
