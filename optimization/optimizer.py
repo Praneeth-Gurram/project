@@ -1,29 +1,20 @@
 """
 Optimization Engine
 
-Initializes the prescriptive analytics
-optimization model using PuLP.
-"""
+Simple prescriptive optimization engine.
 
-from pulp import (
-    LpProblem,
-    LpVariable,
-    LpBinary,
-    LpMaximize,
-    lpSum,
-    LpStatus,
-    value,
-    PULP_CBC_CMD,
-)
+For the submission model, each asset receives at most
+one action. The action with the highest calculated
+benefit is selected directly.
+"""
 
 from optimization.recommendation import Recommendation
 
 
 class SupplyPrescriptOptimizer:
     """
-    Linear Programming optimizer responsible
-    for selecting the best logistics action
-    for every asset.
+    Optimization engine responsible for selecting
+    the best logistics action for every asset.
     """
 
     ACTIONS = [
@@ -34,29 +25,29 @@ class SupplyPrescriptOptimizer:
     ]
 
     def __init__(self):
-        self.problem = LpProblem(
-            "SupplyPrescriptOptimization",
-            LpMaximize
-        )
-
         self.decision_variables = {}
 
     def validate_assets(self, asset_ids):
         """
-        Validate asset identifiers before
-        optimization begins.
+        Validate asset identifiers before optimization.
         """
 
         if not asset_ids:
             raise ValueError("Asset list cannot be empty.")
 
         if len(asset_ids) != len(set(asset_ids)):
-            raise ValueError("Duplicate Asset_ID values detected.")
+            raise ValueError(
+                "Duplicate Asset_ID values detected."
+            )
 
     def initialize_variables(self, asset_ids):
         """
-        Create one binary decision variable
-        for every asset-action combination.
+        Initialize the decision structure.
+
+        The original version used binary PuLP variables.
+        For the submission model, a direct benefit comparison
+        is sufficient because each asset can receive only
+        one action.
         """
 
         self.validate_assets(asset_ids)
@@ -64,67 +55,60 @@ class SupplyPrescriptOptimizer:
         self.decision_variables = {}
 
         for asset in asset_ids:
-            self.decision_variables[asset] = {}
-
-            for action in self.ACTIONS:
-                self.decision_variables[asset][action] = LpVariable(
-                    f"{asset}_{action}",
-                    cat=LpBinary
-                )
+            self.decision_variables[asset] = {
+                action: 0
+                for action in self.ACTIONS
+            }
 
     def set_objective(self, benefit_scores):
         """
-        Maximize total business benefit.
-
-        Parameters
-        ----------
-        benefit_scores : dict
-
-        Example:
-
-        {
-            "A101": {
-                "inventory": 8,
-                "dispatch": 12,
-                "route": 15,
-                "waiting_time": 10
-            }
-        }
+        Store benefit scores used to select
+        the best action for each asset.
         """
 
-        self.problem += lpSum(
-            benefit_scores[asset][action]
-            * self.decision_variables[asset][action]
-            for asset in self.decision_variables
-            for action in self.ACTIONS
-        )
+        self.benefit_scores = benefit_scores
 
     def add_constraints(self):
         """
-        Add business constraints to the optimization model.
+        Business constraint:
 
-        Each asset can receive only one
-        optimization action.
+        Each asset can receive only one action.
+
+        This is enforced automatically when the
+        highest-benefit action is selected.
         """
 
-        for asset in self.decision_variables:
-
-            self.problem += (
-                lpSum(
-                    self.decision_variables[asset][action]
-                    for action in self.ACTIONS
-                ) <= 1,
-                f"One_Action_Per_Asset_{asset}"
-            )
+        pass
 
     def solve(self):
         """
-        Solve the optimization problem.
+        Select the highest-benefit action for
+        every asset.
         """
 
-        self.problem.solve(PULP_CBC_CMD(msg=False))
+        if not hasattr(self, "benefit_scores"):
+            raise ValueError(
+                "Benefit scores must be set before solving."
+            )
 
-        return LpStatus[self.problem.status]
+        for asset in self.decision_variables:
+
+            scores = self.benefit_scores.get(asset, {})
+
+            if not scores:
+                continue
+
+            best_action = max(
+                self.ACTIONS,
+                key=lambda action: scores.get(action, 0)
+            )
+
+            for action in self.ACTIONS:
+                self.decision_variables[asset][action] = (
+                    1 if action == best_action else 0
+                )
+
+        return "Optimal"
 
     def generate_recommendations(self, benefit_scores):
         """
@@ -140,10 +124,7 @@ class SupplyPrescriptOptimizer:
 
             for action in self.ACTIONS:
 
-                variable = self.decision_variables[asset][action]
-
-                if value(variable) == 1:
-
+                if self.decision_variables[asset][action] == 1:
                     selected_action = action
                     break
 
@@ -156,7 +137,9 @@ class SupplyPrescriptOptimizer:
                 priority="HIGH",
                 reason="Optimization selected highest-benefit action.",
                 estimated_cost=0.0,
-                expected_benefit=benefit_scores[asset][selected_action]
+                expected_benefit=benefit_scores[
+                    asset
+                ][selected_action],
             )
 
             recommendations.append(recommendation)
@@ -164,7 +147,10 @@ class SupplyPrescriptOptimizer:
         return recommendations
 
     def get_asset_variables(self, asset_id):
-        return self.decision_variables.get(asset_id, {})
+        return self.decision_variables.get(
+            asset_id,
+            {}
+        )
 
     def get_variables(self):
         return self.decision_variables

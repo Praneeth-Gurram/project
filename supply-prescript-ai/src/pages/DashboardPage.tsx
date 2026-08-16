@@ -44,48 +44,45 @@ export function DashboardPage() {
   const runAIAnalysis = async () => {
     setLoading(true)
     setError('')
+    setPredictions([])
+    setRecommendations([])
 
     try {
+      /*
+       * Sample logistics record sent to the FastAPI /analyze endpoint.
+       *
+       * The backend performs:
+       * 1. XGBoost delay prediction
+       * 2. PuLP optimization
+       * 3. Recommendation generation
+       */
       const logisticsData = [
         {
-          asset_id: 'A101',
-          Latitude: 19.076,
-          Longitude: 72.8777,
-          Inventory_Level: 250,
-          Temperature: 30,
-          Humidity: 70,
-          Waiting_Time: 25,
-          User_Transaction_Amount: 1500,
+          Asset_ID: 'A101',
+          Timestamp: '2026-07-20 10:00:00',
+          Latitude: 20,
+          Longitude: 72,
+          Inventory_Level: 150,
+          Shipment_Status: 'Delayed',
+          Temperature: 25,
+          Humidity: 60,
+          Traffic_Status: 'Heavy',
+          Waiting_Time: 50,
+          User_Transaction_Amount: 500,
           User_Purchase_Frequency: 5,
-          Asset_Utilization: 65,
+          Logistics_Delay_Reason: 'Traffic Congestion',
+          Asset_Utilization: 90,
           Demand_Forecast: 250,
-          Hour: 14,
-          DayOfWeek: 2,
-          Month: 8,
-          IsWeekend: 0,
-        },
-        {
-          asset_id: 'A102',
-          Latitude: 19.076,
-          Longitude: 72.8777,
-          Inventory_Level: 180,
-          Temperature: 29,
-          Humidity: 68,
-          Waiting_Time: 10,
-          User_Transaction_Amount: 900,
-          User_Purchase_Frequency: 3,
-          Asset_Utilization: 50,
-          Demand_Forecast: 180,
-          Hour: 14,
-          DayOfWeek: 2,
-          Month: 8,
-          IsWeekend: 0,
         },
       ]
 
-      // Step 1: XGBoost prediction
-      const predictionResponse = await fetch(
-        'http://127.0.0.1:8000/predict',
+      /*
+       * Single backend call.
+       *
+       * /analyze combines prediction + optimization.
+       */
+      const response = await fetch(
+        '/analyze',
         {
           method: 'POST',
           headers: {
@@ -97,48 +94,43 @@ export function DashboardPage() {
         },
       )
 
-      if (!predictionResponse.ok) {
-        throw new Error('Prediction request failed')
+      if (!response.ok) {
+        throw new Error(
+          `Backend returned ${response.status}`,
+        )
       }
 
-      const predictionResult = await predictionResponse.json()
+      const result = await response.json()
 
-      setPredictions(predictionResult.predictions)
+      /*
+       * Backend returns predictions as:
+       *
+       * {
+       *   "A101": 0.9783
+       * }
+       *
+       * Convert that object into the format
+       * expected by the React UI.
+       */
+      const predictionList: Prediction[] = Object.entries(
+        result.predictions || {},
+      ).map(([asset_id, probability]) => ({
+        asset_id,
+        delay_probability: Number(probability),
+      }))
 
-      // Step 2: Send predictions to optimization engine
-      const predictionMap: Record<string, number> = {}
+      setPredictions(predictionList)
 
-      predictionResult.predictions.forEach(
-        (prediction: Prediction) => {
-          predictionMap[prediction.asset_id] =
-            prediction.delay_probability
-        },
-      )
-
-      const optimizationResponse = await fetch(
-        'http://127.0.0.1:8000/optimize',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            predictions: predictionMap,
-          }),
-        },
-      )
-
-      if (!optimizationResponse.ok) {
-        throw new Error('Optimization request failed')
-      }
-
-      const optimizationResult = await optimizationResponse.json()
-
-      setRecommendations(optimizationResult.recommendations)
+      /*
+       * Backend already returns optimization
+       * recommendations in JSON-ready format.
+       */
+      setRecommendations(result.recommendations || [])
     } catch (err) {
-      console.error(err)
+      console.error('AI Analysis Error:', err)
+
       setError(
-        'Unable to connect to the SupplyPrescript AI backend.',
+        'Unable to connect to the SupplyPrescript AI backend. Make sure FastAPI is running on port 8000.',
       )
     } finally {
       setLoading(false)
@@ -153,12 +145,17 @@ export function DashboardPage() {
         action={<SearchBar />}
       />
 
+      {/* Dashboard Statistics */}
       <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((item) => (
-          <StatCard key={item.title} item={item} />
+          <StatCard
+            key={item.title}
+            item={item}
+          />
         ))}
       </div>
 
+      {/* Operational Overview */}
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, lg: 8 }}>
           <Paper className="rounded-2xl border border-slate-200 p-6 shadow-sm">
@@ -196,9 +193,10 @@ export function DashboardPage() {
         </Grid>
       </Grid>
 
-      {/* AI Analysis */}
+      {/* AI Prescriptive Analysis */}
       <Box className="mt-6">
         <Paper className="rounded-2xl border border-slate-200 p-6 shadow-sm">
+          {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-blue-50 p-3 text-blue-600">
@@ -228,19 +226,24 @@ export function DashboardPage() {
               disabled={loading}
             >
               {loading ? (
-                <CircularProgress size={22} color="inherit" />
+                <CircularProgress
+                  size={22}
+                  color="inherit"
+                />
               ) : (
                 'Run AI Analysis'
               )}
             </Button>
           </div>
 
+          {/* Error */}
           {error && (
             <Box className="mt-4 rounded-xl bg-red-50 p-4 text-red-700">
               {error}
             </Box>
           )}
 
+          {/* Delay Predictions */}
           {predictions.length > 0 && (
             <Box className="mt-6">
               <Typography
@@ -266,8 +269,12 @@ export function DashboardPage() {
                         </Typography>
 
                         <Chip
-                          icon={<AlertTriangle size={16} />}
-                          label={`${probability.toFixed(2)}% delay risk`}
+                          icon={
+                            <AlertTriangle size={16} />
+                          }
+                          label={`${probability.toFixed(
+                            2,
+                          )}% delay risk`}
                           color={
                             probability >= 50
                               ? 'error'
@@ -283,6 +290,7 @@ export function DashboardPage() {
             </Box>
           )}
 
+          {/* Optimization Recommendations */}
           {recommendations.length > 0 && (
             <Box className="mt-6">
               <Typography
@@ -293,58 +301,63 @@ export function DashboardPage() {
               </Typography>
 
               <div className="grid gap-3 md:grid-cols-2">
-                {recommendations.map((recommendation) => (
-                  <div
-                    key={recommendation.asset_id}
-                    className="rounded-xl border border-slate-200 p-4"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <Typography className="font-semibold">
-                          {recommendation.asset_id}
-                        </Typography>
-
-                        <div className="mt-2 flex items-center gap-2">
-                          <Route size={18} />
-
-                          <Typography className="capitalize">
-                            {recommendation.action.replace(
-                              '_',
-                              ' ',
-                            )}
+                {recommendations.map(
+                  (recommendation) => (
+                    <div
+                      key={recommendation.asset_id}
+                      className="rounded-xl border border-slate-200 p-4"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <Typography className="font-semibold">
+                            {recommendation.asset_id}
                           </Typography>
+
+                          <div className="mt-2 flex items-center gap-2">
+                            <Route size={18} />
+
+                            <Typography className="capitalize">
+                              {recommendation.action.replace(
+                                '_',
+                                ' ',
+                              )}
+                            </Typography>
+                          </div>
                         </div>
+
+                        <Chip
+                          label={recommendation.priority}
+                          color="error"
+                          size="small"
+                        />
                       </div>
 
-                      <Chip
-                        label={recommendation.priority}
-                        color="error"
-                        size="small"
-                      />
+                      <Typography
+                        variant="body2"
+                        className="mt-3 text-slate-500"
+                      >
+                        {recommendation.reason}
+                      </Typography>
+
+                      <Typography
+                        variant="body2"
+                        className="mt-2 font-medium"
+                      >
+                        Expected benefit:{' '}
+                        {Number(
+                          recommendation.expected_benefit,
+                        ).toFixed(2)}
+                      </Typography>
                     </div>
-
-                    <Typography
-                      variant="body2"
-                      className="mt-3 text-slate-500"
-                    >
-                      {recommendation.reason}
-                    </Typography>
-
-                    <Typography
-                      variant="body2"
-                      className="mt-2 font-medium"
-                    >
-                      Expected benefit:{' '}
-                      {recommendation.expected_benefit.toFixed(2)}
-                    </Typography>
-                  </div>
-                ))}
+                  ),
+                )}
               </div>
             </Box>
           )}
         </Paper>
       </Box>
 
+      {/* Recent Orders */}
       <Box className="mt-6">
         <DataTable
           rows={orders.map((row) => ({
