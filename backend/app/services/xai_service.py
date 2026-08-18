@@ -1,17 +1,19 @@
-import xgboost as xgb
-import shap
 import pickle
-import numpy as np
+from pathlib import Path
+
 import pandas as pd
-import json
+import xgboost as xgb
+
 
 class XAIService:
-    def __init__(self, model_path="ml/artifacts/xgboost_model.json", explainer_path="ml/artifacts/explainer.pkl"):
-        # We'll load these lazily or during startup
+    def __init__(self, model_path=None, explainer_path=None):
+        base_dir = Path(__file__).resolve().parents[2]
+        artifact_dir = base_dir / "artifacts"
+        self.model_path = model_path or str(artifact_dir / "xgboost_model.json")
+        self.explainer_path = explainer_path or str(artifact_dir / "explainer.pkl")
+
         self.model = None
         self.explainer = None
-        self.model_path = model_path
-        self.explainer_path = explainer_path
         
         self.feature_names = [
             'Demand_Forecast', 'Asset_Utilization', 'Temperature', 'Humidity', 
