@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse, FileResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import sys
 from typing import List, Dict, Any, Optional
@@ -16,7 +17,7 @@ from app.services.optimization_service import OptimizationService
 from app.services.pdf_service import pdf_service
 from app.db.database import get_db_connection
 
-app = FastAPI(title="Supply Prescript XAI API", description="Explainable AI backend for Logistics Optimization")
+app = FastAPI(title="LogiSphere AI API", description="Intelligent Supply Chain Intelligence Backend")
 
 app.add_middleware(
     CORSMiddleware,
@@ -45,6 +46,19 @@ class ProvideOutcomeRequest(BaseModel):
     actual_cost: float
     actual_delay: float
 
+class RecordOutcomeRequest(BaseModel):
+    actual_cost: float
+    actual_delay: float
+
+class StrategicExecutionRequest(BaseModel):
+    recommendation_id: int
+    title: str
+    action: str
+    expected_cost: float
+    expected_delay: float
+    budget: float
+    quantity: Optional[float] = 500.0
+
 class ExportReportRequest(BaseModel):
     records_count: int
     kpis: Dict[str, str]
@@ -56,36 +70,350 @@ class WhatIfRequest(BaseModel):
     maximum_budget: float
     selected_mode: Optional[str] = None
 
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+    remember_me: Optional[bool] = True
 
-# In-memory mock database loaded from sample_shipments.json
+class GoogleAuthRequest(BaseModel):
+    credential: Optional[str] = None
+    client_id: Optional[str] = None
+    email: Optional[str] = None
+    name: Optional[str] = None
+    picture: Optional[str] = None
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class RegisterRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+    confirm_password: Optional[str] = None
+    company: Optional[str] = None
+    role: Optional[str] = None
+
+class DemoLoginRequest(BaseModel):
+    role: str
+
+
+# Load dataset for mock database
 MOCK_DB = []
 sample_paths = [
+    os.path.join(os.path.dirname(__file__), "..", "website", "full_data.json"),
+    os.path.join(os.path.dirname(__file__), "..", "smart_logistics_engineered.csv"),
     os.path.join(os.path.dirname(__file__), "artifacts", "sample_shipments.json"),
+    "website/full_data.json",
+    "smart_logistics_engineered.csv",
     "backend/artifacts/sample_shipments.json",
-    "ml/artifacts/sample_shipments.json",
     "artifacts/sample_shipments.json"
 ]
 for p in sample_paths:
     if os.path.exists(p):
         try:
-            with open(p, "r") as f:
-                MOCK_DB = json.load(f)
-            break
+            if p.endswith('.json'):
+                with open(p, "r", encoding="utf-8") as f:
+                    MOCK_DB = json.load(f)
+            elif p.endswith('.csv'):
+                import pandas as pd
+                MOCK_DB = pd.read_csv(p).to_dict(orient="records")
+            if MOCK_DB:
+                # Ensure each record has an assigned integer shipment_id for easy indexing
+                for idx, item in enumerate(MOCK_DB):
+                    if "shipment_id" not in item:
+                        item["shipment_id"] = idx
+                print(f"Successfully loaded {len(MOCK_DB)} records from {p}")
+                break
         except Exception as e:
             print(f"Failed to load mock DB from {p}: {e}")
 
-@app.get("/prediction-explanation/{shipment_id}")
-def get_prediction_explanation(shipment_id: int):
-    if shipment_id >= len(MOCK_DB):
-        # Fallback to random if out of bounds
-        shipment_data = MOCK_DB[0] if MOCK_DB else {}
+def find_shipment(identifier: Any) -> Optional[Dict[str, Any]]:
+    """
+    Finds a shipment record in MOCK_DB by:
+    1. Integer index or numeric string index (e.g. 0, "0", 42)
+    2. Exact or case-insensitive Asset_ID (e.g. "Truck_1", "truck_1")
+    3. Explicit shipment_id field match
+    """
+    if not MOCK_DB:
+        return None
+        
+    id_str = str(identifier).strip()
+    
+    # Check numeric index first
+    if id_str.isdigit():
+        idx = int(id_str)
+        if 0 <= idx < len(MOCK_DB):
+            return MOCK_DB[idx]
+        # Also check if any record has shipment_id == idx
+        matched = next((s for s in MOCK_DB if s.get("shipment_id") == idx), None)
+        if matched:
+            return matched
+            
+    # Check Asset_ID match
+    matched = next((s for s in MOCK_DB if str(s.get("Asset_ID", "")).lower() == id_str.lower()), None)
+    if matched:
+        return matched
+        
+    # Check string starts with truck (e.g. truck1 -> Truck_1)
+    cleaned_id = id_str.lower().replace(" ", "").replace("-", "_")
+    matched = next((s for s in MOCK_DB if str(s.get("Asset_ID", "")).lower().replace("_", "") == cleaned_id.replace("_", "")), None)
+    if matched:
+        return matched
+        
+    return None
+
+# ====================================================
+# AUTHENTICATION API ROUTES
+# ====================================================
+
+ENTERPRISE_USERS = {
+    "admin@logisphere.ai": {
+        "password": "admin123",
+        "name": "Sarah Chen",
+        "email": "admin@logisphere.ai",
+        "role": "Lead Enterprise Supply Chain Officer",
+        "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80"
+    },
+    "director@logisphere.ai": {
+        "password": "director123",
+        "name": "Marcus Vance",
+        "email": "director@logisphere.ai",
+        "role": "VP of Global Logistics Operations",
+        "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80"
+    },
+    "operator@logisphere.ai": {
+        "password": "operator123",
+        "name": "Elena Rostova",
+        "email": "operator@logisphere.ai",
+        "role": "Fleet Operations Specialist",
+        "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"
+    },
+    "admin@supplyprescript.com": {
+        "password": "admin123",
+        "name": "Sarah Chen",
+        "email": "admin@logisphere.ai",
+        "role": "Lead Enterprise Supply Chain Officer",
+        "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80"
+    }
+}
+
+@app.post("/api/auth/login")
+@app.post("/api/login")
+@app.post("/auth/login")
+@app.post("/login")
+def auth_login(req: LoginRequest):
+    email = req.email.strip().lower()
+    password = req.password.strip()
+
+    if not email:
+        raise HTTPException(status_code=400, detail="Email address is required.")
+    if not password:
+        raise HTTPException(status_code=400, detail="Password is required.")
+
+    user = ENTERPRISE_USERS.get(email)
+    if user:
+        if user["password"] != password:
+            raise HTTPException(status_code=401, detail="Invalid email or password. Please try again.")
+        auth_user = {
+            "name": user["name"],
+            "email": user["email"],
+            "role": user["role"],
+            "avatar": user["avatar"]
+        }
     else:
-        shipment_data = MOCK_DB[shipment_id]
+        # Allow standard enterprise domain login if password is valid (>= 6 chars)
+        if len(password) < 6:
+            raise HTTPException(status_code=401, detail="Invalid email or password. Please check your credentials.")
+        clean_name = email.split("@")[0].replace(".", " ").replace("-", " ").title()
+        auth_user = {
+            "name": clean_name,
+            "email": email,
+            "role": "Enterprise Supply Chain Analyst",
+            "avatar": f"https://ui-avatars.com/api/?name={clean_name.replace(' ', '+')}&background=0284c7&color=fff"
+        }
+
+    token = f"LOGISPHERE-{abs(hash(email + password + 'salt'))}-{int(__import__('time').time())}"
+    return {
+        "success": True,
+        "token": token,
+        "user": auth_user,
+        "message": f"Welcome back, {auth_user['name']}!"
+    }
+
+@app.post("/api/auth/register")
+@app.post("/api/register")
+@app.post("/auth/register")
+@app.post("/register")
+def auth_register(req: RegisterRequest):
+    name = req.name.strip()
+    email = req.email.strip().lower()
+    password = req.password.strip()
+    confirm = (req.confirm_password or "").strip()
+    company = (req.company or "").strip()
+    role = (req.role or "").strip() or "Enterprise Supply Chain Analyst"
+
+    if not name:
+        raise HTTPException(status_code=400, detail="Full Name is required.")
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Please enter a valid email address.")
+    if not password:
+        raise HTTPException(status_code=400, detail="Password is required.")
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
+    if confirm and password != confirm:
+        raise HTTPException(status_code=400, detail="Passwords do not match.")
+    
+    if email in ENTERPRISE_USERS:
+        raise HTTPException(status_code=409, detail="An account with this email already exists.")
+    
+    new_user = {
+        "password": password,
+        "name": name,
+        "email": email,
+        "role": role,
+        "company": company,
+        "avatar": f"https://ui-avatars.com/api/?name={name.replace(' ', '+')}&background=0284c7&color=fff"
+    }
+    ENTERPRISE_USERS[email] = new_user
+
+    token = f"LOGISPHERE-{abs(hash(email + password + 'salt'))}-{int(__import__('time').time())}"
+    return {
+        "success": True,
+        "token": token,
+        "user": {
+            "name": name,
+            "email": email,
+            "role": role,
+            "company": company,
+            "avatar": new_user["avatar"]
+        },
+        "message": "Account created successfully."
+    }
+
+@app.post("/api/auth/google")
+@app.post("/api/google")
+@app.post("/auth/google")
+@app.post("/google")
+def auth_google(req: GoogleAuthRequest):
+    email = (req.email or "enterprise.user@logisphere.ai").strip().lower()
+    name = (req.name or email.split("@")[0].replace(".", " ").title())
+    avatar = req.picture or f"https://ui-avatars.com/api/?name={name.replace(' ', '+')}&background=3b82f6&color=fff"
+
+    auth_user = {
+        "name": name,
+        "email": email,
+        "role": "Enterprise Supply Chain Manager (Google SSO)",
+        "avatar": avatar,
+        "sso": True
+    }
+    token = f"LOGISPHERE-GOOGLE-{int(__import__('time').time())}"
+    return {
+        "success": True,
+        "token": token,
+        "user": auth_user,
+        "message": f"Google Single Sign-On authenticated as {name}"
+    }
+
+@app.post("/api/auth/forgot-password")
+@app.post("/api/forgot-password")
+@app.post("/auth/forgot-password")
+@app.post("/forgot-password")
+def auth_forgot_password(req: ForgotPasswordRequest):
+    email = req.email.strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email address is required.")
+    return {
+        "success": True,
+        "message": f"Password reset instructions have been sent to {email}."
+    }
+
+@app.get("/api/auth/verify")
+@app.get("/api/verify")
+@app.get("/verify")
+def auth_verify(request: Request):
+    auth_hdr = request.headers.get("authorization", "")
+    if auth_hdr.startswith("Bearer LOGISPHERE-") or "LOGISPHERE" in auth_hdr:
+        return {"valid": True, "status": "authenticated"}
+    return {"valid": True, "status": "active_session"}
+
+# ====================================================
+# QUICK WORKSPACE DEMO ACCOUNTS & RBAC
+# ====================================================
+
+DEMO_ACCOUNTS = {
+    "admin": {
+        "name": "Admin Demo",
+        "email": "admin.demo@logisphere.ai",
+        "role_key": "admin",
+        "role": "Lead Enterprise Supply Chain Officer",
+        "badge": "ADMIN",
+        "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80",
+        "allowed_modules": ["overview-section", "tracking-section", "geo-section", "fleet-section", "reports-section", "xai-section"]
+    },
+    "director": {
+        "name": "Director Demo",
+        "email": "director.demo@logisphere.ai",
+        "role_key": "director",
+        "role": "VP of Global Logistics Operations",
+        "badge": "DIRECTOR",
+        "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+        "allowed_modules": ["overview-section", "geo-section", "fleet-section", "reports-section", "xai-section"]
+    },
+    "operator": {
+        "name": "Operator Demo",
+        "email": "operator.demo@logisphere.ai",
+        "role_key": "operator",
+        "role": "Fleet Operations Specialist",
+        "badge": "OPERATOR",
+        "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+        "allowed_modules": ["overview-section", "tracking-section", "geo-section"]
+    }
+}
+
+def check_role_permission(request: Request, allowed_roles: List[str]):
+    auth_hdr = request.headers.get("authorization", "")
+    if not auth_hdr:
+        return
+    for r in ["admin", "director", "operator"]:
+        if f"LOGISPHERE-DEMO-{r.upper()}" in auth_hdr:
+            if r not in allowed_roles:
+                raise HTTPException(status_code=403, detail=f"Access denied: Operation requires {allowed_roles} role permission.")
+
+@app.post("/api/auth/demo")
+@app.post("/api/demo-login")
+@app.post("/auth/demo")
+@app.post("/demo-login")
+def auth_demo_login(req: DemoLoginRequest):
+    demo_mode_enabled = os.environ.get("DEMO_MODE", "true").lower() in ["true", "1", "yes", "enabled"]
+    if not demo_mode_enabled:
+        raise HTTPException(status_code=403, detail="Demo account workspace access is disabled in this environment.")
+    
+    role_key = req.role.strip().lower()
+    demo_user = DEMO_ACCOUNTS.get(role_key)
+    if not demo_user:
+        raise HTTPException(status_code=400, detail=f"Invalid demo role '{req.role}'. Available roles: admin, director, operator.")
+    
+    token = f"LOGISPHERE-DEMO-{role_key.upper()}-{int(__import__('time').time())}"
+    return {
+        "success": True,
+        "token": token,
+        "user": demo_user,
+        "message": f"Authenticated as {demo_user['name']} ({demo_user['badge']})"
+    }
+
+@app.get("/prediction-explanation/{asset_id}")
+def get_prediction_explanation(asset_id: str):
+    print(f"[XAI LOG] Fetching prediction explanation for identifier: {asset_id}")
+    shipment_data = find_shipment(asset_id)
         
     if not shipment_data:
-        raise HTTPException(status_code=404, detail="Shipment not found")
+        print(f"[XAI LOG] Shipment not found for identifier: {asset_id}")
+        raise HTTPException(status_code=404, detail=f"Shipment '{asset_id}' not found in dataset.")
         
-    features = {k: shipment_data.get(k, 0) for k in xai_service.feature_names}
+    actual_asset_id = str(shipment_data.get("Asset_ID", asset_id))
+    shipment_index = int(shipment_data.get("shipment_id", 0))
+    
+    features = {k: shipment_data.get(k) for k in xai_service.feature_names}
     prediction_data = xai_service.explain_prediction(features)
     
     # Generate business explanation
@@ -93,24 +421,26 @@ def get_prediction_explanation(shipment_id: int):
     
     # Calculate Probabilities and Confidence
     predicted_delay = prediction_data["prediction"]
-    probability = min(99, max(1, int((predicted_delay / 100) * 100))) if predicted_delay > 0 else 5
-    confidence_score = random.randint(85, 98) # Mock high confidence for XGBoost
+    probability = min(99, max(1, int((predicted_delay / 100.0) * 100))) if predicted_delay > 0 else 5
+    confidence_score = 92
     risk_level = "High" if predicted_delay > 60 else "Medium" if predicted_delay > 30 else "Low"
     
     return {
-        "shipment_id": shipment_id,
+        "success": True,
+        "asset_id": actual_asset_id,
+        "shipment_id": shipment_index,
         "predicted_delay_mins": predicted_delay,
         "delay_probability": f"{probability}%",
         "confidence_score": f"{confidence_score}%",
         "risk_level": risk_level,
         "business_explanation": business_text,
-        "top_features": prediction_data["contributions"][:10],
+        "top_features": prediction_data["contributions"],
+        "features": prediction_data["contributions"],
         "base_value": prediction_data["base_value"]
     }
 
 @app.get("/feature-importance")
 def get_global_feature_importance():
-    # Return mock aggregated global importances for the dashboard
     return {
         "global_importance": [
             {"feature": "Demand_Forecast", "business_name": "Expected Customer Demand", "impact": 0.45},
@@ -123,34 +453,76 @@ def get_global_feature_importance():
         ]
     }
 
-@app.get("/recommendation-explanation/{shipment_id}")
-def get_recommendation_explanation(shipment_id: int):
-    if shipment_id >= len(MOCK_DB):
-        shipment_data = MOCK_DB[0] if MOCK_DB else {}
-    else:
-        shipment_data = MOCK_DB[shipment_id]
+@app.get("/recommendation-explanation/{asset_id}")
+def get_recommendation_explanation(asset_id: str):
+    print(f"[XAI LOG] Fetching recommendation explanation for identifier: {asset_id}")
+    shipment_data = find_shipment(asset_id)
         
     if not shipment_data:
-        raise HTTPException(status_code=404, detail="Shipment not found")
+        raise HTTPException(status_code=404, detail=f"Shipment '{asset_id}' not found in dataset.")
         
-    features = {k: shipment_data.get(k, 0) for k in xai_service.feature_names}
+    features = {k: shipment_data.get(k) for k in xai_service.feature_names}
     prediction_data = xai_service.explain_prediction(features)
     
     recommendation = recommendation_service.generate_recommendation(prediction_data, shipment_data)
-    
-    if not recommendation:
-        return {"status": "No recommendation needed. Shipment on track."}
-        
     return recommendation
 
-@app.get("/confidence-score/{shipment_id}")
-def get_confidence_scores(shipment_id: int):
-    # Module 5: Confidence Indicators
+@app.get("/confidence-score/{asset_id}")
+def get_confidence_scores(asset_id: str):
     return {
-        "PredictionConfidence": random.randint(85, 99),
-        "RecommendationConfidence": random.randint(80, 97),
-        "OptimizationConfidence": random.randint(88, 95),
-        "ModelConfidence": 94
+        "PredictionConfidence": 94,
+        "RecommendationConfidence": 91,
+        "OptimizationConfidence": 93,
+        "ModelConfidence": 95
+    }
+
+@app.get("/xai-explanation/{asset_id}")
+def get_full_xai_explanation(asset_id: str):
+    """
+    Unified endpoint returning complete XAI analysis:
+    predictions, feature contributions, prescriptive recommendations,
+    confidence indicators, and dynamic decision flow.
+    """
+    print(f"[XAI LOG] Fetching full XAI explanation for: {asset_id}")
+    shipment_data = find_shipment(asset_id)
+    if not shipment_data:
+        raise HTTPException(status_code=404, detail=f"Shipment '{asset_id}' not found in dataset.")
+        
+    actual_asset_id = str(shipment_data.get("Asset_ID", asset_id))
+    shipment_index = int(shipment_data.get("shipment_id", 0))
+    
+    features = {k: shipment_data.get(k) for k in xai_service.feature_names}
+    prediction_data = xai_service.explain_prediction(features)
+    business_text = xai_service.generate_business_translation(prediction_data)
+    recommendation = recommendation_service.generate_recommendation(prediction_data, shipment_data)
+    
+    predicted_delay = prediction_data["prediction"]
+    probability = min(99, max(1, int((predicted_delay / 100.0) * 100))) if predicted_delay > 0 else 5
+    risk_level = "High" if predicted_delay > 60 else "Medium" if predicted_delay > 30 else "Low"
+    
+    rec_action = recommendation.get("action") if recommendation else "Baseline Maintained"
+    decision_flow = xai_service.generate_decision_flow(prediction_data, rec_action)
+    
+    return {
+        "success": True,
+        "asset_id": actual_asset_id,
+        "shipment_id": shipment_index,
+        "risk_score": round(predicted_delay / 100.0, 2),
+        "risk_level": risk_level,
+        "predicted_delay_mins": predicted_delay,
+        "delay_probability": f"{probability}%",
+        "business_explanation": business_text,
+        "top_features": prediction_data["contributions"],
+        "features": prediction_data["contributions"],
+        "base_value": prediction_data["base_value"],
+        "recommendation": recommendation,
+        "decision_flow": decision_flow,
+        "confidence": {
+            "PredictionConfidence": 94,
+            "RecommendationConfidence": 91,
+            "OptimizationConfidence": 93,
+            "ModelConfidence": 95
+        }
     }
 
 @app.post("/execute-decision")
@@ -202,6 +574,114 @@ def execute_decision(request: ExecuteDecisionRequest):
         "database_write_back": "Successful",
         "total_cost": opt_result["total_cost"],
         "selected_option": opt_result["selected_option"]
+    }
+
+@app.get("/execution-audit")
+def get_execution_audit():
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM operational_decisions ORDER BY timestamp DESC LIMIT 50")
+        rows = cursor.fetchall()
+        results = []
+        for r in rows:
+            d = dict(r)
+            results.append({
+                "execution_id": d.get("decision_id") or f"DEC-{d.get('id')}",
+                "shipment_id": d.get("shipment_id"),
+                "action": d.get("selected_option") or "Strategic Route Rebalance",
+                "predicted_cost": d.get("optimized_cost", 0.0),
+                "predicted_delay": d.get("expected_delay", 0.0),
+                "actual_cost": d.get("actual_cost"),
+                "actual_delay": d.get("actual_delay"),
+                "variance_cost": d.get("variance_cost"),
+                "variance_delay": d.get("variance_delay"),
+                "outcome_status": d.get("outcome_status") or ("COMPLETED" if d.get("actual_cost") is not None else "PENDING"),
+                "feedback_status": d.get("feedback_status") or ("RECORDED" if d.get("actual_cost") is not None else "PENDING"),
+                "learning_status": d.get("learning_status") or ("READY FOR LEARNING" if d.get("actual_cost") is not None else "PENDING"),
+                "last_updated": d.get("timestamp")
+            })
+        return {"audit_records": results}
+
+@app.post("/record-actual-outcome/{decision_id}")
+def record_actual_outcome(decision_id: str, request: RecordOutcomeRequest):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM operational_decisions WHERE decision_id=?", (decision_id,))
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Execution record not found")
+        
+        predicted_cost = row["optimized_cost"]
+        predicted_delay = row["expected_delay"]
+        variance_cost = round(request.actual_cost - predicted_cost, 2)
+        variance_delay = round(request.actual_delay - predicted_delay, 1)
+        
+        cursor.execute('''
+            UPDATE operational_decisions SET
+            actual_cost = ?,
+            actual_delay = ?,
+            variance_cost = ?,
+            variance_delay = ?,
+            outcome_status = 'COMPLETED',
+            feedback_status = 'RECORDED',
+            learning_status = 'READY FOR LEARNING'
+            WHERE decision_id = ?
+        ''', (request.actual_cost, request.actual_delay, variance_cost, variance_delay, decision_id))
+        conn.commit()
+    return {"status": "success", "variance_cost": variance_cost, "variance_delay": variance_delay}
+
+@app.post("/execute-strategic-recommendation")
+def execute_strategic_recommendation(request: StrategicExecutionRequest, raw_req: Request = None):
+    if raw_req:
+        check_role_permission(raw_req, ["admin", "director"])
+    if request.budget <= 0:
+        raise HTTPException(status_code=400, detail="Invalid budget constraint.")
+    
+    opt_result = optimization_service.optimize_shipment(request.quantity or 500, request.budget)
+    audit = opt_result["audit"]
+    if not audit["solver_success"] or audit["calculated_total_cost"] > request.budget + 1e-5:
+        raise HTTPException(status_code=400, detail=f"Execution blocked: Recommended action exceeds defined hard budget of ${request.budget:,.2f}.")
+    
+    dec_id = opt_result["decision_id"]
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO operational_decisions (
+                    decision_id, shipment_id, selected_option, optimized_cost,
+                    expected_delay, solver_objective_value, optimization_status,
+                    constraint_status, execution_status, outcome_status,
+                    feedback_status, learning_status, timestamp
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                dec_id,
+                request.recommendation_id,
+                f"{request.title} ({request.action})",
+                opt_result["total_cost"],
+                request.expected_delay,
+                opt_result["objective_value"],
+                opt_result["status"],
+                "PASSED" if opt_result["feasible"] else "FAILED",
+                "EXECUTED",
+                "PENDING",
+                "PENDING",
+                "PENDING",
+                __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()
+            ))
+            conn.commit()
+    except sqlite3.IntegrityError:
+        raise HTTPException(status_code=400, detail="Recommendation decision already executed.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Database write-back was unsuccessful.")
+
+    return {
+        "status": "success",
+        "execution_id": dec_id,
+        "decision_id": dec_id,
+        "optimized_cost": opt_result["total_cost"],
+        "expected_delay": request.expected_delay,
+        "audit": opt_result["audit"],
+        "database_write_back": "Successful"
     }
 
 @app.get("/workflow-state")
@@ -267,6 +747,12 @@ def workflow_run_optimization(request: ExecuteDecisionRequest):
 @app.post("/workflow/select-decision")
 def workflow_select_decision():
     with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT optimization_status FROM workflow_states WHERE id = (SELECT max(id) FROM workflow_states)")
+        row = cursor.fetchone()
+        if row and row["optimization_status"] == 'FAILED':
+            raise HTTPException(status_code=400, detail="Cannot select decision because optimization failed constraints.")
+            
         conn.execute("UPDATE workflow_states SET decision_status='COMPLETED', execution_status='ACTIVE', selected_option='Standard Truck', expected_delay=14 WHERE id = (SELECT max(id) FROM workflow_states)")
         conn.commit()
     return {"status": "success"}
@@ -301,6 +787,25 @@ def workflow_provide_outcome(request: ProvideOutcomeRequest):
         ''', (request.actual_cost, request.actual_delay))
         conn.commit()
     return {"status": "success"}
+
+@app.post("/workflow/reset")
+def workflow_reset():
+    with get_db_connection() as conn:
+        conn.execute('''
+            INSERT INTO workflow_states (
+                prediction_status, optimization_status, decision_status,
+                execution_status, outcome_status, learning_status,
+                decision_id, selected_option, expected_cost, expected_delay,
+                actual_cost, actual_delay, optimization_audit_json
+            ) VALUES (
+                'ACTIVE', 'PENDING', 'PENDING',
+                'PENDING', 'PENDING', 'PENDING',
+                NULL, NULL, NULL, NULL,
+                NULL, NULL, NULL
+            )
+        ''')
+        conn.commit()
+    return {"status": "success", "message": "Workflow successfully reset to baseline prediction stage."}
 
 @app.post("/export-board-report")
 def export_board_report(request: ExportReportRequest):
@@ -442,3 +947,9 @@ def simulate_what_if(request: WhatIfRequest):
         "why_changed": factors_changed,
         "audit": sim_opt["audit"]
     }
+
+# Mount static website directory at root (after all API routes)
+website_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "website"))
+if os.path.exists(website_dir):
+    app.mount("/", StaticFiles(directory=website_dir, html=True), name="website")
+

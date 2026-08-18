@@ -19,9 +19,31 @@ def init_db():
                 optimization_status TEXT NOT NULL,
                 constraint_status TEXT NOT NULL,
                 execution_status TEXT NOT NULL,
+                actual_cost REAL,
+                actual_delay REAL,
+                variance_cost REAL,
+                variance_delay REAL,
+                outcome_status TEXT DEFAULT 'PENDING',
+                feedback_status TEXT DEFAULT 'PENDING',
+                learning_status TEXT DEFAULT 'PENDING',
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        
+        # Optional column migrations for existing DB
+        for col_def in [
+            ("actual_cost", "REAL"),
+            ("actual_delay", "REAL"),
+            ("variance_cost", "REAL"),
+            ("variance_delay", "REAL"),
+            ("outcome_status", "TEXT DEFAULT 'PENDING'"),
+            ("feedback_status", "TEXT DEFAULT 'PENDING'"),
+            ("learning_status", "TEXT DEFAULT 'PENDING'")
+        ]:
+            try:
+                cursor.execute(f"ALTER TABLE operational_decisions ADD COLUMN {col_def[0]} {col_def[1]}")
+            except Exception:
+                pass
         
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS workflow_states (

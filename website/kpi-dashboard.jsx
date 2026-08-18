@@ -1,6 +1,6 @@
 const { useState, useEffect, useRef } = React;
-const { motion, AnimatePresence } = window.Motion;
-const { LineChart, Line, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, ReferenceLine, Tooltip } = window.Recharts;
+const { motion, AnimatePresence } = window.Motion || window.FramerMotion || { motion: { div: 'div', span: 'span', circle: 'circle' }, AnimatePresence: ({ children }) => children };
+const { LineChart = () => null, Line = () => null, ResponsiveContainer = ({ children }) => children, PieChart = () => null, Pie = () => null, Cell = () => null, AreaChart = () => null, Area = () => null, ReferenceLine = () => null, Tooltip = () => null } = window.Recharts || {};
 
 // Utility for Lucide Icons in React (using the vanilla JS lucide library loaded on the page)
 const Icon = ({ name, color = "currentColor", size = 24, className = "" }) => {
@@ -476,7 +476,7 @@ const DashboardApp = () => {
             <div className="relative z-20 flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                        Enterprise Logistics Analytics
+                        LogiSphere AI Enterprise Analytics
                         <div className="flex items-center gap-1.5 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full text-xs">
                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                             <span className="text-green-400 font-medium">Live Data</span>

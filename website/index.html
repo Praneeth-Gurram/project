@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Logistics Dashboard</title>
+    <title>LogiSphere AI — Intelligent Supply Chain Intelligence</title>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Leaflet CSS & JS -->
@@ -21,19 +21,66 @@
     <script src="https://unpkg.com/recharts@2.10.3/dist/Recharts.js"></script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK (App & Auth Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <!-- Google OAuth Client ID -->
+    <meta name="google-signin-client_id" content="933593436326-riinjqu4s0biscg5cqfublto7k9qab6k.apps.googleusercontent.com">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
-    <div class="dashboard-container">
+    <!-- Authentication Screen Root -->
+    <div id="auth-root"></div>
+
+    <!-- Protected Enterprise Dashboard -->
+    <div class="dashboard-container" id="dashboard-root" style="display: none;">
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
-                <h2>📦 Smart Logistics</h2>
-                <p>AI Insights Engine</p>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.35rem;">
+                    <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 8px rgba(102, 252, 241, 0.45)); flex-shrink: 0;">
+                        <!-- Outer Spherical Network Orbit -->
+                        <circle cx="16" cy="16" r="14" stroke="url(#logisphere-grad-1)" stroke-width="1.4" stroke-dasharray="3 2" opacity="0.6"/>
+                        <!-- Elliptical Logistics Routes -->
+                        <ellipse cx="16" cy="16" rx="13" ry="5.5" transform="rotate(-25 16 16)" stroke="url(#logisphere-grad-2)" stroke-width="1.6"/>
+                        <ellipse cx="16" cy="16" rx="13" ry="5.5" transform="rotate(35 16 16)" stroke="url(#logisphere-grad-1)" stroke-width="1.2" opacity="0.75"/>
+                        <!-- AI Intelligence Core Hub -->
+                        <circle cx="16" cy="16" r="3.2" fill="url(#logisphere-grad-core)"/>
+                        <circle cx="16" cy="16" r="5.5" stroke="#66fcf1" stroke-width="0.8" opacity="0.5"/>
+                        <!-- Distributed Node Vertices -->
+                        <circle cx="5" cy="11" r="1.6" fill="#66fcf1"/>
+                        <circle cx="27" cy="21" r="1.6" fill="#66fcf1"/>
+                        <circle cx="9" cy="23" r="1.4" fill="#45a29e"/>
+                        <circle cx="23" cy="9" r="1.4" fill="#45a29e"/>
+                        <!-- SVG Gradients -->
+                        <defs>
+                            <linearGradient id="logisphere-grad-1" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#66fcf1"/>
+                                <stop offset="1" stop-color="#3b82f6"/>
+                            </linearGradient>
+                            <linearGradient id="logisphere-grad-2" x1="0" y1="32" x2="32" y2="0" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#38bdf8"/>
+                                <stop offset="1" stop-color="#66fcf1"/>
+                            </linearGradient>
+                            <linearGradient id="logisphere-grad-core" x1="13" y1="13" x2="19" y2="19" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#66fcf1"/>
+                                <stop offset="1" stop-color="#0284c7"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <h2 style="margin: 0; font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; color: #fff;">
+                        LogiSphere <span style="color: #66fcf1;">AI</span>
+                    </h2>
+                </div>
+                <p style="font-size: 0.72rem; letter-spacing: 0.01em; color: #94a3b8; margin: 0 0 2.2rem 0; line-height: 1.35; font-weight: 500;">
+                    Intelligent Supply Chain Intelligence
+                </p>
             </div>
             <nav>
                 <ul id="nav-menu">
                     <li class="active" data-target="overview-section">Overview (KPIs)</li>
+                    <li data-target="tracking-section">Live Fleet Tracking</li>
                     <li data-target="geo-section">Geo-Routing & Weather</li>
                     <li data-target="fleet-section">Fleet & Correlations</li>
                     <li data-target="reports-section">Executive Reports</li>
@@ -41,6 +88,21 @@
                 </ul>
             </nav>
             <div class="sidebar-footer">
+                <div id="sidebar-user-profile" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 9px; min-width: 0;">
+                        <img id="user-avatar-img" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80" alt="User" style="width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid #38bdf8; flex-shrink: 0; object-fit: cover;" />
+                        <div style="min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <div id="user-display-name" style="font-size: 0.78rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Sarah Chen</div>
+                                <span id="user-role-badge" style="font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 4px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); text-transform: uppercase; letter-spacing: 0.05em; display: none;">ADMIN</span>
+                            </div>
+                            <div id="user-display-role" style="font-size: 0.65rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Supply Chain Lead</div>
+                        </div>
+                    </div>
+                    <button id="btn-logout" title="Sign Out" style="background: transparent; border: none; color: #f87171; cursor: pointer; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" onmouseover="this.style.background='rgba(248,113,113,0.15)'" onmouseout="this.style.background='transparent'">
+                        <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
+                    </button>
+                </div>
                 <p>Comprehensive Analytics Platform</p>
             </div>
         </aside>
@@ -57,17 +119,21 @@
             <!-- ============================== -->
             <div id="overview-section" class="tab-content active">
                 
-                <!-- GLOBAL FILTERS (SMART LIVE ANALYTICS CONTROL CENTER) -->
-                <section class="glass-card" style="margin-bottom: 2rem;">
+                <!-- 1. Global Logistics Filters -->
+                <section class="glass-card" id="global-filter-panel" style="margin-bottom: 2rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;"><i data-lucide="filter"></i> Global Filters</h3>
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 10px; color: #fff;">
+                            <i data-lucide="sliders-horizontal" style="color: #38bdf8;"></i> Global Logistics Filters
+                        </h3>
                         <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="text" id="filter-search-id" class="glass-input" placeholder="Search Route ID..." style="padding: 5px 10px; min-width: 200px;">
-                            <div style="color: #60a5fa; font-weight: bold; font-size: 0.9rem;" id="filter-matching-records">1,000 matching records</div>
+                            <span id="filter-matching-records" style="font-size: 0.85rem; color: #38bdf8; font-weight: 600; background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.2); padding: 4px 12px; border-radius: 20px;">
+                                1,000 matching records
+                            </span>
                         </div>
                     </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px;">
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                        <!-- 1. Time Period -->
                         <div>
                             <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Time Period</label>
                             <select id="filter-time" class="glass-input" style="width: 100%;">
@@ -75,46 +141,59 @@
                                 <option value="today">Today</option>
                                 <option value="week">This Week</option>
                                 <option value="month">This Month</option>
+                                <option value="quarter">Last Quarter</option>
                             </select>
                         </div>
+                        <!-- 2. Region -->
                         <div>
                             <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Region</label>
                             <select id="filter-region" class="glass-input" style="width: 100%;">
                                 <option value="all">All Regions</option>
-                                <option value="North">North</option>
-                                <option value="South">South</option>
-                                <option value="East">East</option>
-                                <option value="West">West</option>
+                                <option value="North America">North America</option>
+                                <option value="Europe">Europe</option>
+                                <option value="Asia Pacific">Asia Pacific</option>
+                                <option value="Latin America">Latin America</option>
                             </select>
                         </div>
+                        <!-- 3. Warehouse -->
                         <div>
                             <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Warehouse</label>
                             <select id="filter-warehouse" class="glass-input" style="width: 100%;">
                                 <option value="all">All Warehouses</option>
-                                <option value="WH-1">WH-1</option>
-                                <option value="WH-2">WH-2</option>
-                                <option value="WH-3">WH-3</option>
-                                <option value="WH-4">WH-4</option>
+                                <option value="WH-1">WH-1 (High Inv)</option>
+                                <option value="WH-2">WH-2 (Med-High)</option>
+                                <option value="WH-3">WH-3 (Med-Low)</option>
+                                <option value="WH-4">WH-4 (Low Inv)</option>
                             </select>
                         </div>
+                        <!-- 4. Vehicle Type -->
                         <div>
                             <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Vehicle Type</label>
                             <select id="filter-vehicle" class="glass-input" style="width: 100%;">
                                 <option value="all">All Vehicles</option>
-                                <option value="Truck">Truck</option>
-                                <option value="Van">Van</option>
-                                <option value="Drone">Drone</option>
+                                <option value="Truck_1">Truck 1 (Heavy)</option>
+                                <option value="Truck_2">Truck 2 (Standard)</option>
+                                <option value="Truck_3">Truck 3 (Express)</option>
+                                <option value="Truck_4">Truck 4 (Refrigerated)</option>
+                                <option value="Truck_5">Truck 5 (High-Capacity)</option>
+                                <option value="Truck_6">Truck 6 (Urban)</option>
+                                <option value="Truck_7">Truck 7 (Long-Haul)</option>
+                                <option value="Truck_8">Truck 8 (Standard)</option>
+                                <option value="Truck_9">Truck 9 (Multi-Axle)</option>
+                                <option value="Truck_10">Truck 10 (Heavy)</option>
                             </select>
                         </div>
+                        <!-- 5. Traffic Condition -->
                         <div>
                             <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Traffic Condition</label>
                             <select id="filter-traffic" class="glass-input" style="width: 100%;">
                                 <option value="all">All Conditions</option>
-                                <option value="Heavy">Heavy</option>
-                                <option value="Moderate">Moderate</option>
-                                <option value="Light">Light</option>
+                                <option value="Heavy">Heavy Traffic</option>
+                                <option value="Detour">Detour / Moderate</option>
+                                <option value="Clear">Clear / Light</option>
                             </select>
                         </div>
+                        <!-- 6. Delivery Status -->
                         <div>
                             <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Delivery Status</label>
                             <select id="filter-status" class="glass-input" style="width: 100%;">
@@ -124,51 +203,123 @@
                                 <option value="Delayed">Delayed</option>
                             </select>
                         </div>
+                        <!-- 7. Delivery Priority -->
                         <div>
                             <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Delivery Priority</label>
                             <select id="filter-priority" class="glass-input" style="width: 100%;">
                                 <option value="all">All Priorities</option>
-                                <option value="High">High</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Low">Low</option>
+                                <option value="High">High (Tier 1 > $400)</option>
+                                <option value="Medium">Medium (Tier 2 $200-$400)</option>
+                                <option value="Low">Low (Standard < $200)</option>
                             </select>
                         </div>
+                        <!-- 8. Weather Condition -->
                         <div>
                             <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Weather Condition</label>
                             <select id="filter-weather" class="glass-input" style="width: 100%;">
                                 <option value="all">All Weather</option>
                                 <option value="Clear">Clear</option>
                                 <option value="Rain">Rain</option>
-                                <option value="Storm">Storm</option>
+                                <option value="Storm">Storm / Severe</option>
                             </select>
                         </div>
+                        <!-- 9. Geo Cluster -->
                         <div>
                             <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Geo Cluster</label>
                             <select id="filter-geocluster" class="glass-input" style="width: 100%;">
                                 <option value="all">All Clusters</option>
-                                <option value="Cluster_A">Cluster A</option>
-                                <option value="Cluster_B">Cluster B</option>
-                                <option value="Cluster_C">Cluster C</option>
+                                <option value="Zone Central">Zone Central</option>
+                                <option value="Zone East">Zone East</option>
+                                <option value="Zone North">Zone North</option>
+                                <option value="Zone South">Zone South</option>
+                                <option value="Zone West">Zone West</option>
                             </select>
                         </div>
+                        <!-- 10. Driver -->
                         <div>
                             <label style="font-size: 0.8rem; color: #9ca3af; display: block; margin-bottom: 5px;">Driver</label>
                             <select id="filter-driver" class="glass-input" style="width: 100%;">
                                 <option value="all">All Drivers</option>
-                                <option value="D-101">D-101</option>
-                                <option value="D-102">D-102</option>
-                                <option value="D-103">D-103</option>
+                                <option value="D-101">D-101 (Senior)</option>
+                                <option value="D-102">D-102 (Regional)</option>
+                                <option value="D-103">D-103 (Contractor)</option>
                             </select>
                         </div>
                     </div>
                     
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-                        <div id="active-filter-chips" style="display: flex; gap: 10px; flex-wrap: wrap; flex: 1;">
-                            <span style="color: #9ca3af; font-size: 0.9rem; margin-top: 5px;">No active filters</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                        <div id="active-filter-chips" style="display: flex; gap: 8px; flex-wrap: wrap; flex: 1;">
+                            <span style="color: #9ca3af; font-size: 0.85rem;">No active filters</span>
                         </div>
                         <div style="display: flex; gap: 10px;">
-                            <button id="btn-filter-reset" class="glass-btn">Reset</button>
-                            <button id="btn-filter-apply" class="glass-btn primary">Apply</button>
+                            <button id="btn-filter-reset" class="glass-btn"><i data-lucide="rotate-ccw"></i> Reset</button>
+                            <button id="btn-filter-apply" class="glass-btn primary"><i data-lucide="check"></i> Apply Filters</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. KPI Cards Section -->
+                <section class="kpi-grid" id="kpi-section-container" style="margin-bottom: 2rem;">
+                    <div class="glass-card kpi-card" id="card-deliveries">
+                        <h3>Total Deliveries</h3>
+                        <p class="kpi-value" id="kpi-deliveries">...</p>
+                    </div>
+                    <div class="glass-card kpi-card" id="card-ontime">
+                        <h3>On-Time Performance</h3>
+                        <p class="kpi-value highlight-green" id="kpi-ontime">...</p>
+                    </div>
+                    <div class="glass-card kpi-card" id="card-waittime">
+                        <h3>Avg Wait Time</h3>
+                        <p class="kpi-value highlight-red" id="kpi-waittime">...</p>
+                    </div>
+                    <div class="glass-card kpi-card" id="card-revenue">
+                        <h3>Total Revenue</h3>
+                        <p class="kpi-value highlight-blue" id="kpi-revenue">...</p>
+                    </div>
+                    <div class="glass-card kpi-card" id="card-efficiency">
+                        <h3>Efficiency Score</h3>
+                        <p class="kpi-value highlight-purple" id="kpi-efficiency">...</p>
+                    </div>
+                </section>
+
+                <!-- 3. Supply Chain Health + AI Executive Summary -->
+                <section class="charts-grid" id="health-ai-section" style="grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 2rem;">
+                    <!-- Overall Supply Chain Health -->
+                    <div class="glass-card" id="health-card" style="display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; position: relative;">
+                        <h3 style="margin-bottom: 12px; color: #a0aec0; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;">
+                            Overall Supply Chain Health
+                        </h3>
+                        <div style="position: relative; width: 150px; height: 150px; display: flex; align-items: center; justify-content: center;">
+                            <svg width="150" height="150" style="transform: rotate(-90deg);">
+                                <circle cx="75" cy="75" r="65" stroke="rgba(255,255,255,0.1)" stroke-width="12" fill="none" />
+                                <circle id="health-score-circle" cx="75" cy="75" r="65" stroke="#4ade80" stroke-width="12" fill="none" stroke-dasharray="408" stroke-dashoffset="32" style="transition: stroke-dashoffset 1.5s ease-out, stroke 0.5s ease;" />
+                            </svg>
+                            <div id="health-score-val" style="position: absolute; font-size: 2.3rem; font-weight: bold; color: #fff;">
+                                92<span style="font-size: 1rem; color: #a0aec0;">/100</span>
+                            </div>
+                        </div>
+                        <p id="health-score-sub" style="font-size: 0.85rem; color: #4ade80; margin-top: 10px; font-weight: 500;">
+                            Optimal Operational Health
+                        </p>
+                    </div>
+                    
+                    <!-- AI Executive Summary -->
+                    <div class="glass-card" id="ai-executive-summary-card" style="background: rgba(30, 58, 138, 0.2); border: 1px solid rgba(59, 130, 246, 0.3); display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0; display: flex; align-items: center; gap: 10px; color: #93c5fd;">
+                                    <i data-lucide="sparkles"></i> AI Executive Summary
+                                </h3>
+                                <span id="ai-summary-badge" style="font-size: 0.75rem; background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); padding: 2px 8px; border-radius: 12px; font-weight: 600;">
+                                    Real-Time Analysis
+                                </span>
+                            </div>
+                            <div id="executive-summary-text" style="font-size: 1rem; line-height: 1.6; color: #e2e8f0;">
+                                <p style="margin-bottom: 8px;">Network monitoring active across <strong>1,000 active shipments</strong>.</p>
+                                <p style="margin-bottom: 8px;"><strong style="color: #f87171;">9 high-risk shipments</strong> flagged due to severe weather delays.</p>
+                                <p style="margin-bottom: 8px;">Prescriptive AI recommends <strong>Air Freight re-routing</strong> for priority shipments. Projected savings: <strong style="color: #4ade80;">$84,000</strong>.</p>
+                                <p style="margin: 0;">Overall network delay risk reduced by <strong>18%</strong> following automated dispatch optimization.</p>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -179,7 +330,7 @@
                         <h3 style="color: #93c5fd; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
                             <i data-lucide="bar-chart-2"></i> Data-Driven Insight
                         </h3>
-                        <p id="insight-text" style="font-size: 1.1rem; line-height: 1.6; color: #e2e8f0; margin-bottom: 15px;">
+                        <p id="insight-text" style="font-size: 1rem; line-height: 1.6; color: #e2e8f0; margin-bottom: 15px;">
                             --
                         </p>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -206,7 +357,7 @@
                         <h3 style="color: #34d399; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
                             <i data-lucide="check-circle"></i> Recommended Action
                         </h3>
-                        <p id="rec-text" style="font-size: 1.1rem; line-height: 1.6; color: #e2e8f0; margin-bottom: 15px;">
+                        <p id="rec-text" style="font-size: 1rem; line-height: 1.6; color: #e2e8f0; margin-bottom: 15px;">
                             --
                         </p>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -225,173 +376,95 @@
                         </div>
                     </div>
                 </section>
-                
-                <!-- Patch 10 & 11: Health Score & Executive Summary -->
-                <section class="charts-grid" style="grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 2rem;">
-                    <!-- Health Score -->
-                    <div class="glass-card" style="display: flex; align-items: center; justify-content: center; flex-direction: column;">
-                        <h3 style="margin-bottom: 10px; color: #a0aec0; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px;">Overall Supply Chain Health</h3>
-                        <div style="position: relative; width: 150px; height: 150px; display: flex; align-items: center; justify-content: center;">
-                            <svg width="150" height="150" style="transform: rotate(-90deg);">
-                                <circle cx="75" cy="75" r="65" stroke="rgba(255,255,255,0.1)" stroke-width="12" fill="none" />
-                                <circle cx="75" cy="75" r="65" stroke="#4ade80" stroke-width="12" fill="none" stroke-dasharray="408" stroke-dashoffset="32" style="transition: stroke-dashoffset 1.5s ease-out;" />
-                            </svg>
-                            <div style="position: absolute; font-size: 2.5rem; font-weight: bold; color: #fff;">92<span style="font-size: 1rem; color: #a0aec0;">/100</span></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Executive AI Summary -->
-                    <div class="glass-card" style="background: rgba(30, 58, 138, 0.2); border: 1px solid rgba(59, 130, 246, 0.3);">
-                        <h3 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px; color: #93c5fd;">
-                            <i data-lucide="sparkles"></i> AI Executive Summary
-                        </h3>
-                        <div id="executive-summary-text" style="font-size: 1.1rem; line-height: 1.6; color: #e2e8f0;">
-                            <p style="margin-bottom: 10px;">Today, <strong>1000 shipments</strong> were monitored across the network.</p>
-                            <p style="margin-bottom: 10px;"><strong style="color: #f87171;">9 shipments</strong> require immediate attention due to extreme weather delays.</p>
-                            <p style="margin-bottom: 10px;">The AI recommends <strong>Air Freight</strong> for 5 critical shipments. Estimated savings: <strong style="color: #4ade80;">$84,000</strong>.</p>
-                            <p>Overall network risk has decreased by <strong>18%</strong> compared to yesterday following automated rerouting.</p>
-                        </div>
-                    </div>
-                <div id="react-kpi-root" style="margin-bottom: 2rem;"></div>
-                <section class="kpi-grid">
-                    <div class="glass-card kpi-card">
-                        <h3>Total Deliveries</h3>
-                        <p class="kpi-value" id="kpi-deliveries">...</p>
-                    </div>
-                    <div class="glass-card kpi-card">
-                        <h3>On-Time Performance</h3>
-                        <p class="kpi-value highlight-green" id="kpi-ontime">...</p>
-                    </div>
-                    <div class="glass-card kpi-card">
-                        <h3>Avg Wait Time</h3>
-                        <p class="kpi-value highlight-red" id="kpi-waittime">...</p>
-                    </div>
-                    <div class="glass-card kpi-card">
-                        <h3>Total Revenue</h3>
-                        <p class="kpi-value highlight-blue" id="kpi-revenue">...</p>
-                    </div>
-                    <div class="glass-card kpi-card">
-                        <h3>Efficiency Score</h3>
-                        <p class="kpi-value highlight-purple" id="kpi-efficiency">...</p>
-                    </div>
-                </section>
 
-                <!-- AI Control Tower Map & Feed -->
-                <section class="charts-grid" style="grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 2rem;">
-                    <!-- Interactive Map -->
-                    <div class="glass-card" style="padding: 0; overflow: hidden; position: relative;">
-                        <div id="shipment-map" style="height: 400px; width: 100%; border-radius: 10px;"></div>
-                        <div style="position: absolute; top: 15px; left: 15px; z-index: 999; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
-                            <i data-lucide="map" style="width: 16px; height: 16px; display: inline-block; margin-right: 5px; vertical-align: middle;"></i> 
-                            <span style="font-size: 0.85rem; font-weight: bold; color: #fff;">Live Fleet Tracking</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Live Tracking Feed -->
-                    <div class="glass-card" style="display: flex; flex-direction: column; max-height: 400px;">
-                        <h3 style="margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                            <i data-lucide="activity" style="color: #60a5fa;"></i> Active Alerts
-                        </h3>
-                        <div id="live-feed" style="overflow-y: auto; flex-grow: 1; padding-right: 10px;">
-                            <!-- Injected via JS -->
-                        </div>
-                    </div>
-                </section>
+                <!-- 4. Live Fleet Tracking + Active Alerts (Unified Fleet Engine) -->
+                <div id="react-overview-fleet-root" style="margin-bottom: 2rem;"></div>
 
-                <section class="charts-grid">
+                <!-- 5. Delivery Status & Traffic Analysis Charts -->
+                <section class="charts-grid" id="overview-charts-section">
                     <div class="glass-card chart-container">
                         <h3>Delivery Status Breakdown</h3>
                         <canvas id="donutChart"></canvas>
                     </div>
                     <div class="glass-card chart-container chart-span-2">
                         <h3>Impact of Traffic on Delays</h3>
-                        <canvas id="lineChart"></canvas>
+                        
+                        <!-- Executive Summary Row -->
+                        <div class="flex flex-col md:flex-row flex-wrap gap-4 mt-4 mb-4" style="animation: fadeIn 0.5s ease-out forwards;">
+                            <!-- Metric 1: Average Delay -->
+                            <div class="flex-1 min-w-[200px] flex items-center gap-3 p-3 rounded-lg border border-white/5 bg-white/5 transition-all duration-300 hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:-translate-y-0.5 cursor-default" style="backdrop-filter: blur(12px);">
+                                <div class="p-2 rounded-md bg-white/5 text-gray-400">
+                                    <i data-lucide="clock" style="width:20px;height:20px;"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Average Delay</span>
+                                    <span id="metric-avg-delay" class="text-lg font-bold text-white leading-tight">35.1 min</span>
+                                    <span class="text-[10px] text-gray-500">Across all conditions</span>
+                                </div>
+                            </div>
+
+                            <!-- Metric 2: Highest Risk -->
+                            <div class="flex-1 min-w-[200px] flex items-center gap-3 p-3 rounded-lg border border-white/5 bg-white/5 transition-all duration-300 hover:bg-white/10 hover:shadow-[0_0_15px_rgba(248,113,113,0.15)] hover:-translate-y-0.5 cursor-default" style="backdrop-filter: blur(12px);">
+                                <div class="p-2 rounded-md bg-red-500/10 text-red-400">
+                                    <i data-lucide="alert-triangle" style="width:20px;height:20px;"></i>
+                                </div>
+                                <div class="flex flex-col flex-grow">
+                                    <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Highest Risk</span>
+                                    <span id="metric-highest-risk" class="text-lg font-bold text-white leading-tight">Heavy Traffic</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="px-2 py-1 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/20">High</span>
+                                </div>
+                            </div>
+
+                            <!-- Metric 3: AI Confidence -->
+                            <div class="flex-1 min-w-[200px] flex items-center gap-3 p-3 rounded-lg border border-white/5 bg-white/5 transition-all duration-300 hover:bg-white/10 hover:shadow-[0_0_15px_rgba(74,222,128,0.15)] hover:-translate-y-0.5 cursor-default" style="backdrop-filter: blur(12px);">
+                                <div class="p-2 rounded-md bg-green-500/10 text-green-400">
+                                    <i data-lucide="brain-circuit" style="width:20px;height:20px;"></i>
+                                </div>
+                                <div class="flex flex-col flex-grow">
+                                    <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">AI Confidence</span>
+                                    <span id="metric-ai-confidence" class="text-lg font-bold text-white leading-tight">96%</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="px-2 py-1 rounded text-[10px] font-bold bg-green-500/20 text-green-400 border border-green-500/20">High Confidence</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="height: 300px; width: 100%;">
+                            <canvas id="lineChart"></canvas>
+                        </div>
                     </div>
                 </section>
+            </div>
+
+            <!-- ============================== -->
+            <!-- LIVE FLEET TRACKING            -->
+            <!-- ============================== -->
+            <div id="tracking-section" class="tab-content hidden">
+                <div id="react-tracking-root"></div>
             </div>
 
             <!-- ============================== -->
             <!-- 2. GEO-ROUTING & WEATHER       -->
             <!-- ============================== -->
             <div id="geo-section" class="tab-content hidden">
-                <section class="charts-grid">
-                    <div class="glass-card chart-container chart-span-2">
-                        <h3>Delay Percentage by Geo-Cluster (Routes)</h3>
-                        <canvas id="barChart"></canvas>
-                    </div>
-                    <div class="glass-card chart-container">
-                        <h3>Extreme Weather Impact</h3>
-                        <canvas id="weatherChart"></canvas>
-                    </div>
-                </section>
-                <div class="glass-card text-card mt-2">
-                    <h3>Geo-Insights</h3>
-                    <p>The clustering analysis aggregates arbitrary delivery locations into actionable operational zones. Severe weather compounds these delays, creating clear bottlenecks across specific regions.</p>
-                </div>
+                <div id="react-geo-root"></div>
             </div>
 
             <!-- ============================== -->
             <!-- 3. FLEET & CORRELATIONS        -->
             <!-- ============================== -->
             <div id="fleet-section" class="tab-content hidden">
-                <section class="charts-grid">
-                    <div class="glass-card chart-container chart-span-2">
-                        <h3>Waiting Time vs. Demand Forecast (Correlation)</h3>
-                        <canvas id="scatterChart"></canvas>
-                    </div>
-                    <div class="glass-card chart-container">
-                        <h3>Asset Performance (Top 3 vs Bottom 3)</h3>
-                        <canvas id="assetChart"></canvas>
-                    </div>
-                </section>
-                <div class="glass-card text-card mt-2">
-                    <h3>Fleet Insights</h3>
-                    <p>The scatter plot visualizes the bivariate relationship confirming that spikes in demand cause significant waiting times. Our asset analysis helps pinpoint exact vehicles driving our delay rates up.</p>
-                </div>
+                <div id="react-fleet-root"></div>
             </div>
 
             <!-- ============================== -->
             <!-- 4. EXECUTIVE REPORTS           -->
             <!-- ============================== -->
             <div id="reports-section" class="tab-content hidden">
-                <div id="react-reports-root" style="margin-bottom: 2rem;"></div>
-                <!-- Executive Summary Box -->
-                <div class="glass-card report-card" style="margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;"><i data-lucide="briefcase"></i> Executive Recommendation Summary</h2>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <span style="font-size: 0.85rem; color: #9ca3af;">Sort By:</span>
-                            <select id="rec-sort-select" class="glass-input" style="padding: 5px 10px;">
-                                <option value="priority">Priority (High to Low)</option>
-                                <option value="category">Category (A-Z)</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); gap: 15px;">
-                        <div class="kpi-card" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; text-align: center;">
-                            <div style="color: #9ca3af; font-size: 0.85rem;">Total Recommendations</div>
-                            <div id="rec-total-count" style="font-size: 1.8rem; font-weight: bold; color: #fff;">0</div>
-                        </div>
-                        <div class="kpi-card" style="background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.3); padding: 15px; border-radius: 10px; text-align: center;">
-                            <div style="color: #fca5a5; font-size: 0.85rem;">High Priority</div>
-                            <div id="rec-high-count" style="font-size: 1.8rem; font-weight: bold; color: #f87171;">0</div>
-                        </div>
-                        <div class="kpi-card" style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); padding: 15px; border-radius: 10px; text-align: center;">
-                            <div style="color: #fcd34d; font-size: 0.85rem;">Medium Priority</div>
-                            <div id="rec-medium-count" style="font-size: 1.8rem; font-weight: bold; color: #fbbf24;">0</div>
-                        </div>
-                        <div class="kpi-card" style="background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); padding: 15px; border-radius: 10px; text-align: center;">
-                            <div style="color: #86efac; font-size: 0.85rem;">Low Priority</div>
-                            <div id="rec-low-count" style="font-size: 1.8rem; font-weight: bold; color: #4ade80;">0</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dynamic Recommendations Container -->
-                <div id="recommendations-container" style="display: flex; flex-direction: column; gap: 15px;">
-                    <!-- Recommendation cards will be injected here via script.js -->
-                </div>
+                <div id="react-reports-root"></div>
             </div>
 
             <!-- ============================== -->
@@ -798,8 +871,15 @@
     <!-- ============================== -->
     <div id="notification-container"></div>
     
-    <script src="script.js?v=2"></script>
-    <script type="text/babel" src="kpi-dashboard.jsx"></script>
-    <script type="text/babel" src="reports-dashboard.jsx"></script>
+    <script src="routing-service.js?v=215"></script>
+    <script src="firebase-config.js?v=215"></script>
+    <script src="script.js?v=215"></script>
+    <script type="text/babel" src="login-auth.jsx?v=215"></script>
+    <script type="text/babel" src="kpi-dashboard.jsx?v=215"></script>
+    <script type="text/babel" src="reports-dashboard.jsx?v=215"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBhOEvPh5ctdR0TbrhOCXHdIuAuO3NFgUo&libraries=places,geometry" async defer></script>
+    <script type="text/babel" src="tracking-dashboard.jsx?v=215"></script>
+    <script type="text/babel" src="fleet-dashboard.jsx?v=215"></script>
+    <script type="text/babel" src="geo-dashboard.jsx?v=215"></script>
 </body>
 </html>

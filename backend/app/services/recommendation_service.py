@@ -34,15 +34,35 @@ class RecommendationService:
         """
         Dynamically generates a recommendation based on the highest SHAP contribution (Root Cause).
         """
-        predicted_delay_mins = prediction_data["prediction"]
-        predicted_delay_days = round(predicted_delay_mins / (24 * 60), 1)
+        predicted_delay_mins = prediction_data.get("prediction", 0.0)
+        predicted_delay_days = round(predicted_delay_mins / (24 * 60), 2)
         
         # If no significant delay, no recommendation needed
-        if predicted_delay_days < 1.0:
-            return None
+        if predicted_delay_mins < 20.0:
+            return {
+                "action": "No action required",
+                "Recommendation": "No action required",
+                "impact": "--",
+                "expected_impact": "--",
+                "ExpectedDelayReduction": "--",
+                "risk_reduction": "--",
+                "RiskReduction": "--",
+                "cost": 0,
+                "estimated_cost": 0,
+                "ExpectedCost": "--",
+                "confidence": 95,
+                "Confidence": "95%",
+                "status": "Optimal",
+                "reason": "Shipment is running within nominal on-time schedule tolerances.",
+                "Reason": "Shipment is running within nominal on-time schedule tolerances.",
+                "expected_savings": 0,
+                "ExpectedSavings": "$0",
+                "roi": 0,
+                "ExpectedROI": "0%"
+            }
             
-        contributions = prediction_data["contributions"]
-        top_factor = contributions[0]["feature"]
+        contributions = prediction_data.get("contributions", [])
+        top_factor = contributions[0].get("feature_name", contributions[0].get("feature", "")) if contributions else "Demand_Forecast"
         
         # Select best recommendation based on top root cause
         if top_factor in ["Temperature", "Humidity"]:
@@ -50,30 +70,44 @@ class RecommendationService:
         elif top_factor in ["Demand_Forecast", "Inventory_Level"]:
             rec = self.recommendation_catalog[1] # Change Supplier
         else:
-            rec = self.recommendation_catalog[2] # Expedited
+            rec = self.recommendation_catalog[2] # Expedited Ground Transport
             
-        base_cost = float(shipment_data.get("User_Transaction_Amount", 5000)) * 0.1 # Base logistics cost is 10% of transaction
+        base_cost = float(shipment_data.get("User_Transaction_Amount", 500) if shipment_data else 500) * 0.1
+        if base_cost <= 0:
+            base_cost = 50.0
+            
+        expected_cost = round(base_cost * rec["cost_multiplier"], 2)
+        delay_reduction_mins = round(predicted_delay_mins * rec["delay_reduction_pct"], 1)
+        new_delay_mins = max(0.0, round(predicted_delay_mins - delay_reduction_mins, 1))
         
-        expected_cost = base_cost * rec["cost_multiplier"]
-        new_delay_days = max(0.1, round(predicted_delay_days * (1 - rec["delay_reduction_pct"]), 1))
+        loss_factor = float(shipment_data.get("User_Transaction_Amount", 500) if shipment_data else 500) * 0.05
+        predicted_loss = (predicted_delay_mins / 60.0) * (loss_factor / 24.0)
+        new_loss = (new_delay_mins / 60.0) * (loss_factor / 24.0)
         
-        # Mocking loss calculation: Every day of delay costs 5% of transaction value
-        predicted_loss = float(shipment_data.get("User_Transaction_Amount", 5000)) * 0.05 * predicted_delay_days
-        new_loss = float(shipment_data.get("User_Transaction_Amount", 5000)) * 0.05 * new_delay_days
-        
-        expected_savings = predicted_loss - (expected_cost - base_cost)
-        
-        # ROI = (Net Profit / Cost of Investment) * 100
+        expected_savings = max(0.0, round(predicted_loss - (expected_cost - base_cost) + 50.0, 2))
         roi = round((expected_savings / expected_cost) * 100, 1) if expected_cost > 0 else 0
         
+        impact_str = f"-{delay_reduction_mins} mins" if delay_reduction_mins < 120 else f"-{round(delay_reduction_mins/60, 1)} hrs"
+        
         return {
+            "action": rec["name"],
             "Recommendation": rec["name"],
-            "Reason": rec["reason_template"].format(delay=predicted_delay_days, new_delay=new_delay_days),
-            "ExpectedCost": f"${int(expected_cost):,}",
-            "ExpectedDelayReduction": f"{round(predicted_delay_days - new_delay_days, 1)} days",
+            "impact": impact_str,
+            "expected_impact": impact_str,
+            "ExpectedDelayReduction": impact_str,
+            "risk_reduction": rec["risk_reduction"],
             "RiskReduction": rec["risk_reduction"],
-            "ExpectedSavings": f"${int(expected_savings):,}",
-            "ExpectedROI": f"{roi}%",
+            "cost": expected_cost,
+            "estimated_cost": expected_cost,
+            "ExpectedCost": f"${int(expected_cost):,}",
+            "confidence": rec["confidence"],
             "Confidence": f"{rec['confidence']}%",
-            "BusinessImpact": "Critical" if expected_savings > 10000 else "High"
+            "status": "Pending Review",
+            "reason": rec["reason_template"].format(delay=round(predicted_delay_mins, 1), new_delay=new_delay_mins),
+            "Reason": rec["reason_template"].format(delay=round(predicted_delay_mins, 1), new_delay=new_delay_mins),
+            "expected_savings": expected_savings,
+            "ExpectedSavings": f"${int(expected_savings):,}",
+            "roi": roi,
+            "ExpectedROI": f"{roi}%",
+            "BusinessImpact": "Critical" if expected_savings > 500 else "High"
         }

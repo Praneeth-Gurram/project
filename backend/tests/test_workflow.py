@@ -18,11 +18,16 @@ def clean_db():
         cursor = conn.cursor()
         cursor.execute("DELETE FROM operational_decisions")
         cursor.execute("DELETE FROM workflow_states")
-        
-        # Initialize default row
         cursor.execute("INSERT INTO workflow_states (prediction_status) VALUES ('ACTIVE')")
         conn.commit()
     yield
+    # Restore clean baseline after test
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM operational_decisions")
+        cursor.execute("DELETE FROM workflow_states")
+        cursor.execute("INSERT INTO workflow_states (prediction_status) VALUES ('ACTIVE')")
+        conn.commit()
 
 def test_workflow_full_happy_path():
     # 1. Generate prediction

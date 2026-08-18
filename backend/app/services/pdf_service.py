@@ -25,7 +25,7 @@ class PDFService:
             spaceBefore=20,
             spaceAfter=10
         )
-        
+
         elements = []
         
         # 1. Header

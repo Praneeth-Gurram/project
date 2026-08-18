@@ -6,8 +6,15 @@ __pycache__/
 .vscode/
 *.log
 *.pdf
+*.diff
+*.patch
+*.db
+.env
+backend/.env
+.env.*
 website/error_log.txt
 website/index.patch
 backend/operational.db
+operational.db
 node_modules/
 dist/
